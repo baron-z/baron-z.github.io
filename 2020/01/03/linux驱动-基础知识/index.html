@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":"ture","mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前言:  整理 linux 相关基础知识点">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux驱动-基础知识">
+<meta property="og:url" content="https://example.com/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/index.html">
+<meta property="og:site_name" content="braon-z&#39;s blog">
+<meta property="og:description" content="前言:  整理 linux 相关基础知识点">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myblog-1259396478.cos.ap-chengdu.myqcloud.com/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/linux%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/6.jpg">
+<meta property="og:image" content="https://myblog-1259396478.cos.ap-chengdu.myqcloud.com/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/linux%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/1-1.jpg">
+<meta property="article:published_time" content="2020-01-03T01:14:17.000Z">
+<meta property="article:modified_time" content="2021-04-13T04:14:41.266Z">
+<meta property="article:author" content="braon-z">
+<meta property="article:tag" content="驱动">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myblog-1259396478.cos.ap-chengdu.myqcloud.com/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/linux%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/6.jpg">
+
+
+<link rel="canonical" href="https://example.com/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>linux驱动-基础知识 | braon-z's blog</title>
+  
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">braon-z's blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-commonweal"><a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87"><span class="nav-text">一、字符设备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81struct-file-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">1、struct file 数据结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81struct-inode-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-text">2、struct inode 结构体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81struct-file-operations-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-text">3、struct file_operations 结构体</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89struct-module-owner"><span class="nav-text">1）struct module *owner;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89open-%E5%87%BD%E6%95%B0"><span class="nav-text">2）open() 函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89read-%E5%87%BD%E6%95%B0"><span class="nav-text">3）read() 函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89write-%E5%87%BD%E6%95%B0"><span class="nav-text">3）write() 函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%EF%BC%89ioctl-%E5%87%BD%E6%95%B0"><span class="nav-text">4）ioctl() 函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#a-%E5%91%BD%E4%BB%A4%E7%9A%84%E7%BB%84%E6%88%90"><span class="nav-text">a. 命令的组成</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#b-%E5%91%BD%E4%BB%A4%E7%94%9F%E6%88%90%E6%96%B9%E5%BC%8F"><span class="nav-text">b. 命令生成方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#c-%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8"><span class="nav-text">c. 简单使用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%EF%BC%89llseek-%E5%87%BD%E6%95%B0"><span class="nav-text">5）llseek()函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81struct-cdev-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-text">4、struct cdev 结构体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5%E3%80%81%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E7%9A%84%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8D%B8%E8%BD%BD"><span class="nav-text">5、字符设备的注册与卸载</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%89cdev-init-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%87%BD%E6%95%B0"><span class="nav-text">1）cdev_init()初始化函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%89cdev-add-%E5%87%BD%E6%95%B0"><span class="nav-text">2）cdev_add()函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%BC%89cdev-del-%E5%87%BD%E6%95%B0"><span class="nav-text">3）cdev_del()函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6%E3%80%81%E8%AE%BE%E5%A4%87%E8%8A%82%E7%82%B9"><span class="nav-text">6、设备节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7%E3%80%81%E5%AD%97%E7%AC%A6%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="nav-text">7、字符设备驱动流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8%E3%80%81%E7%94%A8%E6%88%B7%E4%B8%8E%E5%86%85%E6%A0%B8%E5%86%85%E5%AD%98%E4%BA%A4%E4%BA%92"><span class="nav-text">8、用户与内核内存交互</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%90%8C%E6%AD%A5%E4%B8%8E%E4%BA%92%E6%96%A5"><span class="nav-text">二、同步与互斥</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F"><span class="nav-text">1、原子变量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-text">1) 基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%95%B4%E5%9E%8B%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C"><span class="nav-text">2) 整型原子操作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E8%AE%BE%E7%BD%AE%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F"><span class="nav-text">1. 设置原子变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%8E%B7%E5%8F%96%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F%E7%9A%84%E5%80%BC"><span class="nav-text">2. 获取原子变量的值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F%E5%8A%A0-%E5%87%8F"><span class="nav-text">3. 原子变量加&#x2F;减</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E5%8E%9F%E5%AD%90%E5%8F%98%E9%87%8F%E8%87%AA%E5%A2%9E-%E8%87%AA%E5%87%8F"><span class="nav-text">4. 原子变量自增&#x2F;自减</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E6%93%8D%E4%BD%9C%E5%B9%B6%E6%B5%8B%E8%AF%95"><span class="nav-text">5. 操作并测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-%E6%93%8D%E4%BD%9C%E5%B9%B6%E8%BF%94%E5%9B%9E"><span class="nav-text">6. 操作并返回</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%BD%8D%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C"><span class="nav-text">3) 位原子操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E4%BF%A1%E5%8F%B7%E9%87%8F"><span class="nav-text">2、信号量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%93%8D%E4%BD%9C%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E6%8E%A5%E5%8F%A3"><span class="nav-text">1) 操作信号量的接口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BF%A1%E5%8F%B7%E9%87%8F"><span class="nav-text">1. 初始化信号量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%8E%B7%E5%8F%96%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E5%80%BC"><span class="nav-text">2. 获取信号量的值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E9%87%8A%E6%94%BE%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E5%80%BC"><span class="nav-text">3. 释放信号量的值</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3%E3%80%81%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-text">3、自旋锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%87%AA%E6%97%8B%E9%94%81%E6%93%8D%E4%BD%9C%E6%8E%A5%E5%8F%A3"><span class="nav-text">1) 自旋锁操作接口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-text">1. 初始化自旋锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%8E%B7%E5%8F%96%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-text">2. 获取自旋锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E9%87%8A%E6%94%BE%E8%87%AA%E6%97%8B%E9%94%81"><span class="nav-text">3. 释放自旋锁</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4%E3%80%81%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-text">4、互斥锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BA%92%E6%96%A5%E9%94%81%E6%8E%A5%E5%8F%A3"><span class="nav-text">1) 互斥锁接口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-text">1.初始化互斥锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%8E%B7%E5%8F%96%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-text">2. 获取互斥锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E9%87%8A%E6%94%BE%E4%BA%92%E6%96%A5%E9%94%81"><span class="nav-text">3. 释放互斥锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E8%8E%B7%E5%8F%96%E9%94%81%E7%8A%B6%E6%80%81"><span class="nav-text">4. 获取锁状态</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81linux-%E9%98%9F%E5%88%97"><span class="nav-text">三、linux 队列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E7%AD%89%E5%BE%85%E9%98%9F%E5%88%97"><span class="nav-text">1、等待队列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%AD%89%E5%BE%85%E9%98%9F%E5%88%97%E6%8E%A5%E5%8F%A3"><span class="nav-text">1) 等待队列接口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-text">1. 创建与初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%B7%BB%E5%8A%A0%E7%A7%BB%E9%99%A4%E7%AD%89%E5%BE%85%E9%98%9F%E5%88%97"><span class="nav-text">2. 添加移除等待队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E8%BF%9B%E7%A8%8B%E4%BC%91%E7%9C%A0"><span class="nav-text">3. 进程休眠</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E5%94%A4%E9%86%92%E8%BF%9B%E7%A8%8B"><span class="nav-text">4. 唤醒进程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2%E3%80%81%E5%B7%A5%E4%BD%9C%E9%98%9F%E5%88%97"><span class="nav-text">2、工作队列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%93%8D%E4%BD%9C%E5%87%BD%E6%95%B0"><span class="nav-text">3) 操作函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%B7%A5%E4%BD%9C%E9%98%9F%E5%88%97"><span class="nav-text">1. 初始化工作队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%B0%83%E5%BA%A6%E5%B7%A5%E4%BD%9C%E9%98%9F%E5%88%97"><span class="nav-text">2. 调度工作队列</span></a></li></ol></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="braon-z"
+      src="/images/wallhaven.jfif">
+  <p class="site-author-name" itemprop="name">braon-z</p>
+  <div class="site-description" itemprop="description"> 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:yourname@gmail.com" title="E-Mail → mailto:yourname@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+<div style="">
+  <canvas id="canvas" style="width:60%;">当前浏览器不支持canvas，请更换浏览器后再试</canvas>
+</div>
+<script>
+(function(){
+
+   var digit=
+    [
+        [
+            [0,0,1,1,1,0,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,0,1,1,0],
+            [0,0,1,1,1,0,0]
+        ],//0
+        [
+            [0,0,0,1,1,0,0],
+            [0,1,1,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [1,1,1,1,1,1,1]
+        ],//1
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,1,1],
+            [1,1,1,1,1,1,1]
+        ],//2
+        [
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//3
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,0],
+            [0,0,1,1,1,1,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,1,1,0],
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,1]
+        ],//4
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,1,1,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//5
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//6
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0]
+        ],//7
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//8
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,1,1,0,0,0,0]
+        ],//9
+        [
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0]
+        ]//:
+    ];
+
+var canvas = document.getElementById('canvas');
+
+if(canvas.getContext){
+    var cxt = canvas.getContext('2d');
+    //声明canvas的宽高
+    var H = 100,W = 700;
+    canvas.height = H;
+    canvas.width = W;
+    cxt.fillStyle = '#f00';
+    cxt.fillRect(10,10,50,50);
+
+    //存储时间数据
+    var data = [];
+    //存储运动的小球
+    var balls = [];
+    //设置粒子半径
+    var R = canvas.height/20-1;
+    (function(){
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        //存储时间数字，由十位小时、个位小时、冒号、十位分钟、个位分钟、冒号、十位秒钟、个位秒钟这7个数字组成
+        data.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+    })();
+
+    /*生成点阵数字*/
+    function renderDigit(index,num){
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    cxt.beginPath();
+                    cxt.arc(14*(R+2)*index + j*2*(R+1)+(R+1),i*2*(R+1)+(R+1),R,0,2*Math.PI);
+                    cxt.closePath();
+                    cxt.fill();
+                }
+            }
+        }
+    }
+
+    /*更新时钟*/
+    function updateDigitTime(){
+        var changeNumArray = [];
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        var NewData = [];
+        NewData.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+        for(var i = data.length-1; i >=0 ; i--){
+            //时间发生变化
+            if(NewData[i] !== data[i]){
+                //将变化的数字值和在data数组中的索引存储在changeNumArray数组中
+                changeNumArray.push(i+'_'+(Number(data[i])+1)%10);
+            }
+        }
+        //增加小球
+        for(var i = 0; i< changeNumArray.length; i++){
+            addBalls.apply(this,changeNumArray[i].split('_'));
+        }
+        data = NewData.concat();
+    }
+
+    /*更新小球状态*/
+    function updateBalls(){
+        for(var i = 0; i < balls.length; i++){
+            balls[i].stepY += balls[i].disY;
+            balls[i].x += balls[i].stepX;
+            balls[i].y += balls[i].stepY;
+            if(balls[i].x > W + R || balls[i].y > H + R){
+                balls.splice(i,1);
+                i--;
+            }
+        }
+    }
+
+    /*增加要运动的小球*/
+    function addBalls(index,num){
+        var numArray = [1,2,3];
+        var colorArray =  ["#3BE","#09C","#A6C","#93C","#9C0","#690","#FB3","#F80","#F44","#C00"];
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    var ball = {
+                        x:14*(R+2)*index + j*2*(R+1)+(R+1),
+                        y:i*2*(R+1)+(R+1),
+                        stepX:Math.floor(Math.random() * 4 -2),
+                        stepY:-2*numArray[Math.floor(Math.random()*numArray.length)],
+                        color:colorArray[Math.floor(Math.random()*colorArray.length)],
+                        disY:1
+                    };
+                    balls.push(ball);
+                }
+            }
+        }
+    }
+
+    /*渲染*/
+    function render(){
+        //重置画布宽度，达到清空画布的效果
+        canvas.height = 100;
+        //渲染时钟
+        for(var i = 0; i < data.length; i++){
+            renderDigit(i,data[i]);
+        }
+        //渲染小球
+        for(var i = 0; i < balls.length; i++){
+            cxt.beginPath();
+            cxt.arc(balls[i].x,balls[i].y,R,0,2*Math.PI);
+            cxt.fillStyle = balls[i].color;
+            cxt.closePath();
+            cxt.fill();
+        }
+    }
+
+    clearInterval(oTimer);
+    var oTimer = setInterval(function(){
+        //更新时钟
+        updateDigitTime();
+        //更新小球状态
+        updateBalls();
+        //渲染
+        render();
+    },50);
+}
+
+})();
+</script>
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://example.com/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/wallhaven.jfif">
+      <meta itemprop="name" content="braon-z">
+      <meta itemprop="description" content=" 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="braon-z's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          linux驱动-基础知识
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-01-03 09:14:17" itemprop="dateCreated datePublished" datetime="2020-01-03T09:14:17+08:00">2020-01-03</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-04-13 12:14:41" itemprop="dateModified" datetime="2021-04-13T12:14:41+08:00">2021-04-13</time>
+      </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Valine：</span>
+  
+    <a title="valine" href="/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>18k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>16 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><strong>前言:</strong></p>
+<blockquote>
+<p>整理 linux 相关基础知识点</p>
+</blockquote>
+<a id="more"></a>
+<h1 id="一、字符设备"><a href="#一、字符设备" class="headerlink" title="一、字符设备"></a><div align=center>一、字符设备</div></h1><p>字符设备是指只能一个字节一个字节读写的设备，不能随机读取设备内存中的某一数据，读取数据需要按照先后数据。字符设备是面向流的设备，常见的字符设备有鼠标、键盘、串口、控制台和LED设备等，而字符设备用到的核心数据结构有<font color=red>file</font>、<font color=red>inode</font>、<font color=red>cdev</font>、<font color=red>file_operations</font>。</p>
+<h2 id="1、struct-file-数据结构"><a href="#1、struct-file-数据结构" class="headerlink" title="1、struct file 数据结构"></a>1、struct file 数据结构</h2><p>struct file 结构与用户空间程序中的FILE结构<font color=red>没有任何关联</font>，FILE结构在C库中定义不会出现在内核代码中，struct file 是一个内核结构，它不会出现在用户程序中。struct file 结构代表一个打开的文件(它不仅仅限定于设备驱动程序，<font color=red>系统中每个打开的文件在内核空间都有一个对应的 file 结构</font>)。它由内核在open时创建，并且传递给在该文件上操作的所有函数，直到最后的close函数，在文件的所有实例都被关闭后，内核会释放这个数据结构。在内核和驱动源代码中，<font color=red>struct file 的指针通常被命名为 file 或 filp </font>，为了不和这个结构本身混淆，我们一致将指向该结构的指针称为 filp，file 则为结构本身。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">file</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">     <span class="class"><span class="keyword">struct</span> <span class="title">llist_node</span>        <span class="title">fu_llist</span>;</span></span><br><span class="line">     <span class="class"><span class="keyword">struct</span> <span class="title">rcu_head</span>          <span class="title">fu_rcuhead</span>;</span></span><br><span class="line"> &#125; f_u;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">path</span>                  <span class="title">f_path</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> f_dentry              f_path.dentry</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">inode</span>                 *<span class="title">f_inode</span>;</span>		<span class="comment">/* cached value */</span></span><br><span class="line"> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">f_op</span>;</span>		<span class="comment">/* 和文件关联的操作 */</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment">  * Protects f_ep_links, f_flags.</span></span><br><span class="line"><span class="comment">  * Must not be taken from IRQ context.</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"> <span class="keyword">spinlock_t</span>           f_lock;</span><br><span class="line"> <span class="keyword">atomic_long_t</span>        f_count;</span><br><span class="line"> <span class="keyword">unsigned</span> <span class="keyword">int</span>         f_flags;			<span class="comment">/* 文件标志，如O_RDONLY、O_NONBLOCK、O_SYNC */</span></span><br><span class="line"> <span class="keyword">fmode_t</span>              f_mode;			<span class="comment">/* 文件读/写模式，FMODE_READ和FMODE_WRITE ，文件打开是已经做了判断，基本用不着 */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">mutex</span>         <span class="title">f_pos_lock</span>;</span></span><br><span class="line"> <span class="keyword">loff_t</span>               f_pos;			<span class="comment">/* 当前读写位置 */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">fown_struct</span>   <span class="title">f_owner</span>;</span></span><br><span class="line"> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cred</span>    *<span class="title">f_cred</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">file_ra_state</span> <span class="title">f_ra</span>;</span></span><br><span class="line"></span><br><span class="line">　 u64                 f_version;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFiG_SECURITY</span></span><br><span class="line"> <span class="keyword">void</span>         *f_security;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"> <span class="comment">/* needed for tty driver, and maybe others */</span></span><br><span class="line"> <span class="keyword">void</span>         *private_data;           <span class="comment">/* 文件私有数据 */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFiG_EPOLL</span></span><br><span class="line"> <span class="comment">/* Used by fs/eventpoll.c to link all the hooks to this file */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>     <span class="title">f_ep_links</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>     <span class="title">f_tfile_llink</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span>                                <span class="comment">/* #ifdef CONFiG_EPOLL */</span></span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">address_space</span> *<span class="title">f_mapping</span>;</span></span><br><span class="line">&#125; __attribute__((aligned(<span class="number">4</span>)));        <span class="comment">/* lest something weird decides that 2 is OK */</span></span><br></pre></td></tr></table></figure>
+<p>这个数据结构中驱动相关的几个重要成员变量如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th align="left">重要成员</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">loff_t&nbsp;f_pos</td>
+<td>当前读/写位置。loff_t有64位，驱动程序要知道文件中的当前位置，可以读取这个值，但不要去修改它。read/write会使用他们接收到的最后那个指针参数来更新这一位置，而不是直接针对filp-&gt;f_pos进行操作。这一规则的一个例外是llseek方法，该方法的目的本身就是为了修改文件位置</td>
+</tr>
+<tr>
+<td align="left">unsigned&nbsp;int&nbsp;f_flags</td>
+<td>文件标志，如O_RDONLY、O_NONBLOCK、O_SYNC，检查用户的请求是否是非阻塞式的操作，驱动程序需要检查O_NONBLOCK标志，而其他标志很少用到。注意：检测读写权限应该使用f_mode而不是f_flags。所有这些标志都被定义在&lt;linux/fcntl.h&gt;中</td>
+</tr>
+<tr>
+<td align="left">struct&nbsp;file_operations&nbsp;*f_op;</td>
+<td>与文件相关的操作。内核在执行open操作时对这个指针赋值，以后需要处理这个操作时就读取这个指针。</td>
+</tr>
+<tr>
+<td align="left">void *private_data;</td>
+<td>file 结构的私有数据，被初始化为NULL</td>
+</tr>
+</tbody></table>
+<h2 id="2、struct-inode-结构体"><a href="#2、struct-inode-结构体" class="headerlink" title="2、struct inode 结构体"></a>2、struct inode 结构体</h2><p>内核用inode结构在内部表示文件，因此它和file结构不同，后者表示打开的文件描述。对单个文件可能有多个打开的file文件描述(上层可以多次open一个文件)，但他们都指向同一个inode文件。inode包含文件访问权限、属主、组、大小、生成时间、访问时间、最后修改时间等大量文件信息。部分数据结构如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">inode</span> &#123;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">umode_t</span> i_mode;        <span class="comment">/* inode的权限 */</span></span><br><span class="line">    <span class="keyword">uid_t</span> i_uid;           <span class="comment">/* inode拥有者的id */</span></span><br><span class="line">    <span class="keyword">gid_t</span> i_gid;           <span class="comment">/* inode所属的群组id */</span></span><br><span class="line">    <span class="keyword">dev_t</span> i_rdev;          <span class="comment">/* 若是设备文件，此字段将记录设备的设备号 */</span></span><br><span class="line">    <span class="keyword">loff_t</span> i_size;         <span class="comment">/* inode所代表的文件大小 */</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">i_atime</span>;</span> <span class="comment">/* inode最近一次的存取时间 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">i_mtime</span>;</span> <span class="comment">/* inode最近一次的修改时间 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">i_ctime</span>;</span> <span class="comment">/* inode的产生时间 */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        i_blkbits;</span><br><span class="line">    <span class="keyword">blkcnt_t</span>        i_blocks;    <span class="comment">/* inode所使用的block数，一个block为512 字节 */</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">pipe_inode_info</span>  *<span class="title">i_pipe</span>;</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">block_device</span> *<span class="title">i_bdev</span>;</span> </span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> *<span class="title">i_cdev</span>;</span>       <span class="comment">/* 若是字符设备，为其对应的cdev结构体指针。 若是块设备，为其对应的block_device结构体指针*/</span></span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其中驱动对驱动编程有用的成员变量只有两个如下：</p>
+<table>
+<thead>
+<tr>
+<th>成员变量</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dev_t&nbsp;i_rdev</td>
+<td>表示设备文件inode结构，它包含了真正的设备编号</td>
+</tr>
+<tr>
+<td>struct&nbsp;cdev&nbsp;*i_cdev</td>
+<td>当inode指向一个字符设备文件时，i_cdev为其对应的cdev结构体指针</td>
+</tr>
+</tbody></table>
+<p>在驱动中也可通过i_rdev获取设备号，内核提供了下面两个函数来获取inode结构中i_rdev字段中的设备号：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="title">imajor</span><span class="params">(struct inode* inode)</span></span>;  <span class="comment">//获取主设备号</span></span><br><span class="line"><span class="function"><span class="keyword">unsigned</span> <span class="keyword">int</span> <span class="title">iminor</span><span class="params">(struct inode* inode)</span></span>;  <span class="comment">//获取次设备号</span></span><br></pre></td></tr></table></figure>
+<h2 id="3、struct-file-operations-结构体"><a href="#3、struct-file-operations-结构体" class="headerlink" title="3、struct file_operations 结构体"></a>3、struct file_operations 结构体</h2><p>该结构体是系统调用与驱动连接的桥梁，例如：当我们在应用层使用open函数打开一个设备的时候，内核会创建一个file结构并关联file_operations中的一组函数，最终会调用到驱动中关联的file_operations结构体实例中open函数。而file_operations定义了一组操作函数，我们不一定全部用到，通常用到什么函数就关联什么函数。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> file_operations &#123;</span><br><span class="line">  <span class="keyword">struct</span> module *owner;</span><br><span class="line">  loff_t (*llseek) (<span class="keyword">struct</span> file *, loff_t, <span class="keyword">int</span>);</span><br><span class="line">  ssize_t (*read) (<span class="keyword">struct</span> file *, <span class="keyword">char</span> __user *, size_t, loff_t *);</span><br><span class="line">  ssize_t (*write) (<span class="keyword">struct</span> file *, <span class="keyword">const</span> <span class="keyword">char</span> __user *, size_t, loff_t *);</span><br><span class="line">  ssize_t (*aio_read) (<span class="keyword">struct</span> kiocb *, <span class="keyword">const</span> <span class="keyword">struct</span> iovec *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, loff_t);</span><br><span class="line">  ssize_t (*aio_write) (<span class="keyword">struct</span> kiocb *, <span class="keyword">const</span> <span class="keyword">struct</span> iovec *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, loff_t);</span><br><span class="line">  <span class="keyword">int</span> (*iterate) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> dir_context *);</span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> (*poll) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> poll_table_struct *);</span><br><span class="line">  <span class="keyword">long</span> (*unlocked_ioctl) (<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">int</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</span><br><span class="line">  <span class="keyword">long</span> (*compat_ioctl) (<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">int</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</span><br><span class="line">  <span class="keyword">int</span> (*mmap) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> vm_area_struct *);</span><br><span class="line">  <span class="keyword">int</span> (*open) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">  <span class="keyword">int</span> (*flush) (<span class="keyword">struct</span> file *, fl_owner_t <span class="keyword">id</span>);</span><br><span class="line">  <span class="keyword">int</span> (*release) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</span><br><span class="line">  <span class="keyword">int</span> (*fsync) (<span class="keyword">struct</span> file *, loff_t, loff_t, <span class="keyword">int</span> datasync);</span><br><span class="line">  <span class="keyword">int</span> (*aio_fsync) (<span class="keyword">struct</span> kiocb *, <span class="keyword">int</span> datasync);</span><br><span class="line">  <span class="keyword">int</span> (*fasync) (<span class="keyword">int</span>, <span class="keyword">struct</span> file *, <span class="keyword">int</span>);</span><br><span class="line">  <span class="keyword">int</span> (*lock) (<span class="keyword">struct</span> file *, <span class="keyword">int</span>, <span class="keyword">struct</span> file_lock *);</span><br><span class="line">  ssize_t (*sendpage) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> page *, <span class="keyword">int</span>, size_t, loff_t *, <span class="keyword">int</span>);</span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">long</span> (*get_unmapped_area)(<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</span><br><span class="line">  <span class="keyword">int</span> (*check_flags)(<span class="keyword">int</span>);</span><br><span class="line">  <span class="keyword">int</span> (*flock) (<span class="keyword">struct</span> file *, <span class="keyword">int</span>, <span class="keyword">struct</span> file_lock *);</span><br><span class="line">  ssize_t (*splice_write)(<span class="keyword">struct</span> pipe_inode_info *, <span class="keyword">struct</span> file *, loff_t *, size_t, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</span><br><span class="line">  ssize_t (*splice_read)(<span class="keyword">struct</span> file *, loff_t *, <span class="keyword">struct</span> pipe_inode_info *, size_t, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</span><br><span class="line">  <span class="keyword">int</span> (*setlease)(<span class="keyword">struct</span> file *, <span class="keyword">long</span>, <span class="keyword">struct</span> file_lock **);</span><br><span class="line">  <span class="keyword">long</span> (*fallocate)(<span class="keyword">struct</span> file *file, <span class="keyword">int</span> mode, loff_t offset,loff_t len);</span><br><span class="line">  <span class="keyword">int</span> (*show_fdinfo)(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> file *f);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>file_operations的重要性不言而喻，因此以下详细给出重要成员的说明.</p>
+<h3 id="1）struct-module-owner"><a href="#1）struct-module-owner" class="headerlink" title="1）struct module *owner;"></a>1）struct module *owner;</h3><p>一个指向拥有这个结构的模块的指针，内核使用这个字段以避免在模块的操作正在被使用时卸载该模块，几乎所有情况被初始化为THIS_MODULE。</p>
+<h3 id="2）open-函数"><a href="#2）open-函数" class="headerlink" title="2）open() 函数"></a>2）open() 函数</h3><p>对设备文件进行的第一个操作，不要求驱动声明一个对应的方法。如果这个函数没有实现，当用户调用open()时，一直显示成功，但是你的驱动不会得到通知。open函数提供给驱动程序以初始化的能力，从而<font color=red>为以后的操作完成初始化做准备</font>。大部分驱动程序中应当完成下面工作。</p>
+<blockquote>
+<ol>
+<li>检测设备特定的错误（注入设备未就绪或类似的硬件问题）</li>
+<li>如果设备是首次打开，则对其进行初始化。</li>
+<li>如果有必要，更新fop指针</li>
+<li>分配并填写置于 filp-&gt;private_date 里的数据结构</li>
+</ol>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>int (*open) (struct inode *inode , struct file *filp);</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>inode</td>
+<td>为文件节点(详细见前面inode结构)</td>
+</tr>
+<tr>
+<td>filp</td>
+<td>指向内核创建的文件结构(详细见前面file结构)</td>
+</tr>
+</tbody></table>
+<h3 id="3）read-函数"><a href="#3）read-函数" class="headerlink" title="3）read() 函数"></a>3）read() 函数</h3><p>用来从设备读取数据，成功时函数返回读取的字节数，返回值是一个 “signed size” 类型, 常常是目标平台本地的整数类型，出错时返回一个负值,如果此函数未实现(被指为NULL)，当用户调用read()时，将得到 -EINVAL 的返回值，它与用户空间的fread()函数对应。</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>ssize_t (*read) (struct file *filp, char __user *buffer, size_t size , loff_t *ppos);</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>filp</td>
+<td>指向内核创建的文件结构</td>
+</tr>
+<tr>
+<td>buffer</td>
+<td>为对应放置信息的缓冲区（即用户空间内存地址）</td>
+</tr>
+<tr>
+<td>size</td>
+<td>为要读取的信息长度,以字节为单位</td>
+</tr>
+<tr>
+<td>ppos</td>
+<td>为读的位置相对于文件开头的偏移，在读取信息后，这个指针一般都会移动，移动的值为要读取信息的长度值</td>
+</tr>
+</tbody></table>
+<h3 id="3）write-函数"><a href="#3）write-函数" class="headerlink" title="3）write() 函数"></a>3）write() 函数</h3><p>向设备发送数据，成功时返回写入的字节数，如果此函数未实现，当用户调用write()时，将得到 -EINVAL 的返回值，它与用户空间的fwrite()函数对应</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>ssize_t (*write) (struct file * filp, const char __user *buffer, size_t size, loff_t * ppos);</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>filp</td>
+<td>指向系统open时内核创建的文件结构</td>
+</tr>
+<tr>
+<td>buffe</td>
+<td>用户要写入文件的信息缓冲区</td>
+</tr>
+<tr>
+<td>size</td>
+<td>要写入信息的长度</td>
+</tr>
+<tr>
+<td>ppos</td>
+<td>当前的读/写位置，这个值通常是用来判断写文件是否越界</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>注：这个操作和上面的对文件进行读的操作均为阻塞操作</p>
+</blockquote>
+<h3 id="4）ioctl-函数"><a href="#4）ioctl-函数" class="headerlink" title="4）ioctl() 函数"></a>4）ioctl() 函数</h3><p>提供设备相关控制命令的实现（既不是读操作也不是写操作），当调用成功时，返回给调用程序一个非负值。如果设备不提供ioctl入口点，则对于任何内核未预先定义的请求，ioctl系统调用将返回错误。(-ENOTTY,”No such ioctl for device, 该设备无此iotcl命令”)。</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>int (*ioctl) (struct inode *inode, struct file *flip, unsigned int cmd, unsigned long arg);</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>inode</td>
+<td>为文件节点</td>
+</tr>
+<tr>
+<td>filp</td>
+<td>指向系统open时内核创建的文件结构</td>
+</tr>
+<tr>
+<td>cmd</td>
+<td>从用户那里不改变地传下来的命令</td>
+</tr>
+<tr>
+<td>arg</td>
+<td>对应命令的参数</td>
+</tr>
+</tbody></table>
+<p>为了保证用户传递下来的命令安全可靠，内核定义了iotcl命令的组成方式，当使用这个函数是应当遵循这个规则。</p>
+<h4 id="a-命令的组成"><a href="#a-命令的组成" class="headerlink" title="a. 命令的组成"></a>a. 命令的组成</h4><img width=800 src="https://myblog-1259396478.cos.ap-chengdu.myqcloud.com/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/linux%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/6.jpg" >
+
+<ul>
+<li><strong>设备类型</strong><br>设备类型由8位组成，在linux下我们将它称为“幻数”，可以是0~0xFF之间的值，内核中的 ioctl-number.txt 给出了一些推荐的和已经被使用的“幻数”，新设备驱动定义“幻数”的时候要避免与其冲突。</li>
+<li><strong>方向</strong><br>方向由2位组成，表示数据传输的方向</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>参数含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>_IOC_NONE</td>
+<td>无数据传输</td>
+</tr>
+<tr>
+<td>_IOC_READ</td>
+<td>读操作</td>
+</tr>
+<tr>
+<td>_IOC_WRITE</td>
+<td>写操作</td>
+</tr>
+<tr>
+<td>_IOC_READ | _IOC_WRITE</td>
+<td>双向操作</td>
+</tr>
+</tbody></table>
+<ul>
+<li><strong>数据尺寸</strong><br>数据长度字段表示涉及的用户数据的大小，这个成员的宽度依赖于体系结构，通常是 13 位或者14 位。<h4 id="b-命令生成方式"><a href="#b-命令生成方式" class="headerlink" title="b. 命令生成方式"></a>b. 命令生成方式</h4>linux也给出了该命令生成的方式，用户空间与内核空间应声明为相同方式。声明方式如下：</li>
+<li><strong>_IO()</strong><br>用于生成不涉及数据传输的简单命令<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="constructor">_IO(<span class="params">type</span>,<span class="params">nr</span>)</span> <span class="constructor">_IOC(<span class="params">_IOC_NONE</span>,(<span class="params">type</span>)</span>,(nr),<span class="number">0</span>)</span><br></pre></td></tr></table></figure></li>
+<li><strong>_IOR()</strong><br>用于生成读操作命令<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="constructor">_IOR(<span class="params">type</span>,<span class="params">nr</span>,<span class="params">size</span>)</span> <span class="constructor">_IOC(<span class="params">_IOC_READ</span>,(<span class="params">type</span>)</span>,(nr),\</span><br><span class="line">  (<span class="constructor">_IOC_TYPECHECK(<span class="params">size</span>)</span>))</span><br></pre></td></tr></table></figure></li>
+<li><strong>_IOW()</strong><br>用于生成写操作命令<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="constructor">_IOW(<span class="params">type</span>,<span class="params">nr</span>,<span class="params">size</span>)</span> <span class="constructor">_IOC(<span class="params">_IOC_WRITE</span>,(<span class="params">type</span>)</span>,(nr),\</span><br><span class="line">  (<span class="constructor">_IOC_TYPECHECK(<span class="params">size</span>)</span>))</span><br></pre></td></tr></table></figure></li>
+<li><strong>_IOWR()</strong><br>用于生成即可读也可写的操作命令<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="constructor">_IOWR(<span class="params">type</span>,<span class="params">nr</span>,<span class="params">size</span>)</span> <span class="constructor">_IOC(<span class="params">_IOC_READ</span>|<span class="params">_IOC_WRITE</span>,(<span class="params">type</span>)</span>,(nr), \</span><br><span class="line">  (<span class="constructor">_IOC_TYPECHECK(<span class="params">size</span>)</span>))</span><br></pre></td></tr></table></figure></li>
+<li><strong>_IO、_IOR 等使用的_IOC 宏</strong><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="constructor">_IOC(<span class="params">dir</span>,<span class="params">type</span>,<span class="params">nr</span>,<span class="params">size</span>)</span> \</span><br><span class="line">   (((dir) &lt;&lt; _IOC_DIRSHIFT) <span class="pattern-match">| \</span></span><br><span class="line"><span class="pattern-match">   ((<span class="keyword">type</span>) &lt;&lt; <span class="constructor">_IOC_TYPESHIFT</span>) | \</span></span><br><span class="line"><span class="pattern-match">   ((nr) &lt;&lt; <span class="constructor">_IOC_NRSHIFT</span>) | \</span></span><br><span class="line"><span class="pattern-match">   ((size) &lt;&lt; <span class="constructor">_IOC_SIZESHIFT</span>))</span></span><br></pre></td></tr></table></figure>
+<h4 id="c-简单使用"><a href="#c-简单使用" class="headerlink" title="c. 简单使用"></a>c. 简单使用</h4></li>
+</ul>
+<p>下面的代码为伪代码，主要用于说明使用方式</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span>		DEV_NAME <span class="meta-string">&#x27;D&#x27;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>		DEV_CMD				_IO( DEV_NAME, 0)	<span class="comment">//只向内核传递一条DEV_CMD命令</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>		DEV_CMD_READ_SOMTHING	_IOR(DEV_NAME, 1, unsigned int)	<span class="comment">//从内核读取一些数据(数据类型 unsigned int)</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>		DEV_CMD_WRITE_SOMTHING	_IOW(DEV_NAME, 2, unsigned int)	<span class="comment">//向内核写入一些数据(数据类型 int)</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="5）llseek-函数"><a href="#5）llseek-函数" class="headerlink" title="5）llseek()函数"></a>5）llseek()函数</h3><p>用来修改一个文件当前读写位置，并将新位置返回，出错时这个函数返回一个负值。如果这个函数指针是NULL，对seek的钓鱼用将会以某种不可预期的方式修改file结构中的位置计数器。</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>loff_t (*llseek) (struct file *filp , loff_t p, int orig);</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>filp</td>
+<td>指向系统open时内核创建的文件结构</td>
+</tr>
+<tr>
+<td>p</td>
+<td>当前的读/写位置，这个值通常是用来判断写文件是否越界</td>
+</tr>
+<tr>
+<td>orig</td>
+<td>文件定位的地址，文件开头（SEEK_SET、0），当前位置（SEEK_CUR、1），文件末尾（SEEK_END、2）</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>更多请参考博客<a target="_blank" rel="noopener" href="https://www.cnblogs.com/Ph-one/p/4670804.html">Ph_one</a>以及书籍<strong>linux设备驱动开发详解</strong></p>
+</blockquote>
+<h2 id="4、struct-cdev-结构体"><a href="#4、struct-cdev-结构体" class="headerlink" title="4、struct cdev 结构体"></a>4、struct cdev 结构体</h2><p>这也是字符设备最重要的数据结构之一，在当前的liux内核中每一个字符设备都有一个cdev描述，即一个cdev结构表示一个字符设备。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">kobject</span> <span class="title">kobj</span>;</span> 			<span class="comment">/* 内嵌的kobject对象 */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span>			<span class="comment">/* 所属模块*/</span> </span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> *<span class="title">ops</span>;</span>		<span class="comment">/* 文件操作结构体*/</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">  <span class="keyword">dev_t</span> dev;				<span class="comment">/* 设备号*/</span></span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">int</span> count;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>利用这个数据结构就可以在内核创建一个字符设备，分配和初始化cdev的方式有两种，第一种是直接利用同struct cdev类型创建，除此之外还可以使用运行时使用动态创建以及释放，函数接口如下表所示</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>函数功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>struct&nbsp;cdev&nbsp;*cdev_alloc(void)</td>
+<td>动态申请一个cdev内存。</td>
+</tr>
+<tr>
+<td>void&nbsp;cdev_put(struct cdev *p)</td>
+<td>释放cdev_alloc申请的内存</td>
+</tr>
+</tbody></table>
+<h2 id="5、字符设备的注册与卸载"><a href="#5、字符设备的注册与卸载" class="headerlink" title="5、字符设备的注册与卸载"></a>5、字符设备的注册与卸载</h2><p>获得cdev这个结构之后我们还需将其初始化以及注册到内核。</p>
+<h3 id="1）cdev-init-初始化函数"><a href="#1）cdev-init-初始化函数" class="headerlink" title="1）cdev_init()初始化函数"></a>1）cdev_init()初始化函数</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void cdev<span class="constructor">_init(<span class="params">struct</span> <span class="params">cdev</span> <span class="operator">*</span><span class="params">cdev</span>, <span class="params">const</span> <span class="params">struct</span> <span class="params">file_operations</span> <span class="operator">*</span><span class="params">fops</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	memset(cdev, <span class="number">0</span>, sizeof *cdev);              <span class="comment">// 将整个结构体清零；</span></span><br><span class="line">	<span class="constructor">INIT_LIST_HEAD(&amp;<span class="params">cdev</span>-&gt;<span class="params">list</span>)</span>;                <span class="comment">// 初始化list成员使其指向自身；</span></span><br><span class="line">	cdev-&gt;kobj.ktype = &amp;ktype_cdev_default;		<span class="comment">// 初始ktype</span></span><br><span class="line">	kobject<span class="constructor">_init(&amp;<span class="params">cdev</span>-&gt;<span class="params">kobj</span>)</span>;			        <span class="comment">// 初始化kobj成员；</span></span><br><span class="line">	cdev-&gt;ops = fops;				            <span class="comment">// 初始化ops成员；</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>初始化函数主要完成以下几个功能，其中就包括建立cdev和file_operation 之间的连接<br>1.&nbsp;将整个cdev结构体清零<br>2.&nbsp;初始化list成员使其指向自身<br>3.&nbsp;初适化kobj成员<br>4.&nbsp;初始化cdev-&gt;ops，即建立cdev和file_operation 之间的连接</p>
+<h3 id="2）cdev-add-函数"><a href="#2）cdev-add-函数" class="headerlink" title="2）cdev_add()函数"></a>2）cdev_add()函数</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span> cdev<span class="constructor">_add(<span class="params">struct</span> <span class="params">cdev</span> <span class="operator">*</span><span class="params">p</span>, <span class="params">dev_t</span> <span class="params">dev</span>, <span class="params">unsigned</span> <span class="params">count</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	p-&gt;dev = dev;</span><br><span class="line">	p-&gt;count = count;</span><br><span class="line">	return kobj<span class="constructor">_map(<span class="params">cdev_map</span>, <span class="params">dev</span>, <span class="params">count</span>, NULL, <span class="params">exact_match</span>, <span class="params">exact_lock</span>, <span class="params">p</span>)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中count参数是应该和该设备关联的设备编号的数量，count经常取1，但是也存在多个设备编号对应一个特定的设备的特殊情况。cdev_add()可能会失败，如果它返回一个负的错误码，则设备不会被添加到系统中。但这个调用几乎总会成功。对cdev_add的调用通常发生在字符设备驱动模块加载函数中，一旦调用成功，我们的设备就”活”了，他的操作就会被内核调用，因此在驱动设备还没有完全准备好处理设备上的操作时，不能调用cdev_add。这个函数主要完成的功能如下：<br>1.&nbsp;初始化cdev结构的dev设备号<br>2.&nbsp;初始化cdev的设备数目<br>3.&nbsp;向系统添加一个cdev，完成字符设备的注册</p>
+<h3 id="3）cdev-del-函数"><a href="#3）cdev-del-函数" class="headerlink" title="3）cdev_del()函数"></a>3）cdev_del()函数</h3><figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">void cdev<span class="constructor">_del(<span class="params">struct</span> <span class="params">cdev</span> <span class="operator">*</span><span class="params">p</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	cdev<span class="constructor">_unmap(<span class="params">p</span>-&gt;<span class="params">dev</span>, <span class="params">p</span>-&gt;<span class="params">count</span>)</span>;</span><br><span class="line">	kobject<span class="constructor">_put(&amp;<span class="params">p</span>-&gt;<span class="params">kobj</span>)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>向系统删除一个cdev，完成字符设备的卸载，对cdev_del的调用通常发生在字符设备驱动模块卸载函数中，当cdev_del被调用后对应的cdev结构就不应被访问了。在早期的内核中还有另外一种注册卸载字符设备的方式，使用register_chrdev()注册用unregister_chrdev()卸载具体如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>int register_chrdev(unsigned int major, const char* name, struct file_operations* fops)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>major</td>
+<td>设备的主设备号</td>
+</tr>
+<tr>
+<td>name</td>
+<td>驱动程序的名称</td>
+</tr>
+<tr>
+<td>fops</td>
+<td>默认的file_operations结构</td>
+</tr>
+</tbody></table>
+<p>调用这个函数将为给定的主设备号注册0~255作为次设备号，并为每个设备建立一个对应默认cdev结构。使用这一接口的驱动程序必须能够处理所有256个次设备号的open调用，而且也不能使用大于255的主设备号和次设备号。</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>int unregister_chrdev(unsigned int major, const char* name)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>major</td>
+<td>要卸载的设备的主设备号</td>
+</tr>
+<tr>
+<td>name</td>
+<td>要卸载驱动程序的名称</td>
+</tr>
+</tbody></table>
+<p>新的代码中不应在使用这些接口，这种机制在未来的内核中将会消失。</p>
+<h2 id="6、设备节点"><a href="#6、设备节点" class="headerlink" title="6、设备节点"></a>6、设备节点</h2><p>设备节点设备驱动程序的接口，出现在文件系统中就好像它是普通文件一样，通常在/dev目录下，创建设备节点的方式有两种，一种是手动创建，linux内核在运行起来之后，在系统中通过命令手动创建，命令如下：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span> 创建设备节点</span><br><span class="line">mknod <span class="regexp">/dev/</span>xyz c（表示是字符设备） 主设备号 次设备号</span><br><span class="line"></span><br><span class="line"><span class="regexp">//</span>查看设备信息：</span><br><span class="line">ls -l <span class="regexp">/dev/</span>xyz</span><br></pre></td></tr></table></figure>
+<p>除此之外还可以在驱动中自动创建设备文件，该方式依赖于设备模型，<font color=red>字符设备和设备模型的通过设备号关联在一起，只要有设备号就会在 /dev/ 下创建设备节点</font>，参考<a target="_blank" rel="noopener" href="https://baron-z.cn/2021/01/03/linux%E9%A9%B1%E5%8A%A8-%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E6%A8%A1%E5%9E%8B-%E9%87%8D%E6%9E%84/#more">设备驱动模型</a>，在这篇文章中搜索 <strong>devtmpfs_create_node</strong>。，一般情况下我们通常按照下面步骤创建</p>
+<ol>
+<li>调用class_create()函数，可以用它来创建一个类，这个类存放于sys/class/下面，</li>
+<li>再调用 device_create() 函数来在/dev目录下创建相应的设备节点，同时也会在sys/class/下创建出对应的设备文件</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// owner: 模块的拥有着，一般为&quot;THIS_MODULE&quot;</span></span><br><span class="line"><span class="comment">// name : 类名，创建成功后显示 &quot;/sys/class/xxx&quot;</span></span><br><span class="line"><span class="function">struct class *<span class="title">class_create</span><span class="params">(struct <span class="keyword">module</span> *owner, <span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// class: 设备模型中设备所属的类</span></span><br><span class="line"><span class="comment">// parent: 要创建的设备的父设备</span></span><br><span class="line"><span class="comment">// devt: 添加该设备的设备号 dev_t，用于关联字符设备</span></span><br><span class="line"><span class="comment">// drvdata: 该设备的私有数据</span></span><br><span class="line"><span class="comment">// fmt: 备名的名称,创建成功后，将出现 &quot;dev/fmt&quot; 已经 &quot;/sys/class/xxx/fmt&quot;</span></span><br><span class="line"><span class="function">struct device *<span class="title">device_create</span><span class="params">(struct class *class, struct device *parent, <span class="keyword">dev_t</span> devt, <span class="keyword">void</span> *drvdata, <span class="keyword">const</span> <span class="keyword">char</span> *fmt, ...)</span></span></span><br></pre></td></tr></table></figure>
+<p>当卸载设备的时候使用函数 device_destroy()从linux内核系统设备驱动程序模型中移除一个设备，并删除/sys/devices/virtual目录下对应的设备目录及/dev/目录下对应的设备文</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// dev:  创建的设备类</span></span><br><span class="line"><span class="comment">// devt: 对应的设备号</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">device_destroy</span><span class="params">(struct class *dev, <span class="keyword">dev_t</span> devt)</span></span>;</span><br></pre></td></tr></table></figure>
+<h2 id="7、字符设备驱动流程"><a href="#7、字符设备驱动流程" class="headerlink" title="7、字符设备驱动流程"></a>7、字符设备驱动流程</h2><p>1）应用层使用open、write、read函数操作dev目录下的设备文件<br>2）设备文件通过内核中对应设备的主设备号，次设备号，找到对应的file_operations结构<br>3）调用file_operations结构中对应的open、write、read函数驱动相关硬件进行操作<br><br></p>
+<img width=300 src="https://myblog-1259396478.cos.ap-chengdu.myqcloud.com/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/linux%E9%A9%B1%E5%8A%A8%E5%AD%A6%E4%B9%A0/1-1.jpg" >
+
+<h2 id="8、用户与内核内存交互"><a href="#8、用户与内核内存交互" class="headerlink" title="8、用户与内核内存交互"></a>8、用户与内核内存交互</h2><p>用户空间与内核空间之间的数据不能直接进行简单的赋值交互，linux内核提供了两者交互的函数通过 copy_from_user 获取用户空间的数据，通过 copy_to_user 将内核空间的数据传给用户空间，当操作成功后均返回0，操作失败返回负值。</p>
+<table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>static inline unsigned long __must_check copy_from_user(void *to, const void __user *from, unsigned long n)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><div align=center>函数参数</td>
+<td><div align=center>参数含义</td>
+</tr>
+<tr>
+<td>to</td>
+<td>目标地址，内核空间地址</td>
+</tr>
+<tr>
+<td>from</td>
+<td>源地址，用户空间地址</td>
+</tr>
+<tr>
+<td>n</td>
+<td>要拷贝的数据字节数</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><div align=center><strong>函数接口</strong></td>
+<td><div align=center><strong>unsigned long copy_to_user(void __user *to, const void *from, unsigned long n)</strong></td>
+</tr>
+<tr>
+<td>to</td>
+<td>目标地址，用户空间地址</td>
+</tr>
+<tr>
+<td>from</td>
+<td>源地址，内核空间地址</td>
+</tr>
+<tr>
+<td>n</td>
+<td>要拷贝的数据字节数</td>
+</tr>
+</tbody></table>
+<h1 id="二、同步与互斥"><a href="#二、同步与互斥" class="headerlink" title="二、同步与互斥"></a><div align=center>二、同步与互斥</div></h1><ul>
+<li><p><font color=red>互斥：</font>指某一资源同时只允许一个访问者对其进行访问，具有唯一性和排它性。但互斥无法限制访问者对资源的访问顺序，即访问是<strong>无序</strong>的。</p>
+</li>
+<li><p><font color=red>同步：</font>指在互斥的基础上（大多数情况），通过其它机制实现访问者对资源的<strong>有序</strong>访问。在大多数情况下，同步已经实现了互斥，特别是所有写入资源的情况必定是互斥的。少数情况是指可以允许多个访问者同时访问资源。</p>
+</li>
+</ul>
+<p>参考<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzAxNTAyOTczMw==&mid=2649332930&idx=1&sn=cf6b11d2d344e1f192d07d5f5467bccb&chksm=83977848b4e0f15e0650ec8e39593a755d19f4e4f32b8a25e2a2de7ecb0a641bba98019f7e98&scene=126&sessionid=1594705404&key=fa39e04f3e1bcf44088e1716b6d43d3a03b055518147584373ba2c95ca0956ad080126390dacea464cf8ffc82257ffe2d3bf3ebcb9405b6446a978c602cb657a4da2cd6b3cbf401b3a61731f333a9093&ascene=1&uin=NjY2NDMyNjc3&devicetype=Windows+10+x64&version=62090070&lang=zh_CN&exportkey=Ac2AMR9MZ4QTTczcCBTu2/E=&pass_ticket=zyBtnDr5s7LlelcQOyYHgtbncGCTFppo47/yH8Kh7rf/WiwN/09CMEDyCfHkbEIF">【干货】同步与互斥的失败例子</a></p>
+<h2 id="1、原子变量"><a href="#1、原子变量" class="headerlink" title="1、原子变量"></a>1、原子变量</h2><h3 id="1-基本概念"><a href="#1-基本概念" class="headerlink" title="1) 基本概念"></a>1) 基本概念</h3><p>&nbsp;&nbsp;&nbsp;&nbsp; 原子操作的基本单位，原子操作指的是由多步操作组成的一个操作。如果操作不能原子地执行，则要么执行完所有的步骤，要么一步也不执行，不可能执行所有步骤的一个子集。简单来说<font color=red>原子操作就是不能打断的操作，要么完整执行要么不执行</font>。</p>
+<p>内核定义的原子变量结构如下:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kernel<span class="number">-4.4</span>/include/linux/types.h</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span>&#123;</span></span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> counter;</span><br><span class="line">&#125; <span class="keyword">atomic_t</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="2-整型原子操作"><a href="#2-整型原子操作" class="headerlink" title="2) 整型原子操作"></a>2) 整型原子操作</h3><h4 id="1-设置原子变量"><a href="#1-设置原子变量" class="headerlink" title="1. 设置原子变量"></a>1. 设置原子变量</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>atomic_t v = ATOMIC_INIT(0)</td>
+<td>定义原子变量并初始化v为0</td>
+</tr>
+<tr>
+<td>void atomic_set(atomic_t* v,int i)</td>
+<td>设置原子变量的值为i</td>
+</tr>
+</tbody></table>
+<h4 id="2-获取原子变量的值"><a href="#2-获取原子变量的值" class="headerlink" title="2. 获取原子变量的值"></a>2. 获取原子变量的值</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>atomic_read(atomic_t* v)</td>
+<td>返回原子变量的值</td>
+</tr>
+</tbody></table>
+<h4 id="3-原子变量加-减"><a href="#3-原子变量加-减" class="headerlink" title="3. 原子变量加/减"></a>3. 原子变量加/减</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void atomic_add(int i, atomic_t* v)</td>
+<td>原子变量增加i</td>
+</tr>
+<tr>
+<td>void atomic_sub(int i, atomic_t* v)</td>
+<td>原子变量减少i</td>
+</tr>
+</tbody></table>
+<h4 id="4-原子变量自增-自减"><a href="#4-原子变量自增-自减" class="headerlink" title="4. 原子变量自增/自减"></a>4. 原子变量自增/自减</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void atomic_inc(atomic_t* v)</td>
+<td>原子变量自增1</td>
+</tr>
+<tr>
+<td>void atomic_dec(atomic_t* v)</td>
+<td>源自变量自减1</td>
+</tr>
+</tbody></table>
+<h4 id="5-操作并测试"><a href="#5-操作并测试" class="headerlink" title="5. 操作并测试"></a>5. 操作并测试</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>int atomic_inc_and_test(atomic_t* v)</td>
+<td>原子变量自增1，并测试其值是否为0。为0返回true，否则返回false</td>
+</tr>
+<tr>
+<td>int atomic_dec_and_test(atomic_t* v)</td>
+<td>原子变量自减1，并测试其值是否为0。为0返回true，否则返回false</td>
+</tr>
+<tr>
+<td>int atomic_sub_and_test(int i, atomic_t* v)</td>
+<td>原子变量减少i， 并测试其值是否为0。为0返回true，否则返回false</td>
+</tr>
+</tbody></table>
+<h4 id="6-操作并返回"><a href="#6-操作并返回" class="headerlink" title="6. 操作并返回"></a>6. 操作并返回</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>int atomic_add_return(int i, atomic_t* v)</td>
+<td>原子变量的值增加i，并返回新的值</td>
+</tr>
+<tr>
+<td>int atomic_sub_return(int i, atomic_t* v)</td>
+<td>原子变量的值减少i，并返回新的值</td>
+</tr>
+<tr>
+<td>int atomic_inc_return(atomic_t* v)</td>
+<td>原子变量的值自增1，并返回新的值</td>
+</tr>
+<tr>
+<td>int atomic_dec_return(atomic_t* v)</td>
+<td>原子变量的值自减1，并返回新的值</td>
+</tr>
+</tbody></table>
+<h3 id="3-位原子操作"><a href="#3-位原子操作" class="headerlink" title="3) 位原子操作"></a>3) 位原子操作</h3><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void set_bit(nr,void* addr);</td>
+<td>设置addr地址的第nr位，即将nr位置1</td>
+</tr>
+<tr>
+<td>void clear_bit(nr, void* addr);</td>
+<td>清除addr地址的nr位，即将nr位清0</td>
+</tr>
+<tr>
+<td>void chang_bit(nr, void* addr);</td>
+<td>将addr的nr为反置</td>
+</tr>
+<tr>
+<td>test_bit(nr, void* addr);</td>
+<td>返回addr的第nr位</td>
+</tr>
+<tr>
+<td>int test_and_set_bit(nt, void* addr);</td>
+<td>测试addr的nr位，再设置为1</td>
+</tr>
+<tr>
+<td>int test_and_clear_bit(nr, void* addr);</td>
+<td>测试addr的nr位，再清为0</td>
+</tr>
+<tr>
+<td>int test_and_chang_bit(nr, void* addr);</td>
+<td>测试addr的nr位，再反置nr位</td>
+</tr>
+</tbody></table>
+<h2 id="2、信号量"><a href="#2、信号量" class="headerlink" title="2、信号量"></a>2、信号量</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;一个信号量本质上是一个整数值，它和一对函数联合使用，这对函数通常称为P和V。希望进入临界区的进程将在相关信号量上调用P;如果信号量的值大于0,则该值会减1，而进程可以继续。相反，如果信号量的值为0(或者更小)，进程进入休眠并等待直到其他人释放该信号量。对信号量的解锁通过调用V来完成；该函数增加信号量的值，并在必要时唤醒等待的进程。当我们需要将信号量用于互斥时，只需将信号量的值设为1。这样的信号量在任何给定时刻只能由单个线程拥有。内核定义的信号量如下</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">include/linux/semaphore.h</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">semaphore</span> &#123;</span></span><br><span class="line">    <span class="keyword">raw_spinlock_t</span>      lock;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        count;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">wait_list</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>只有得到信号量的进程才能执行临界区的代码，当得不到信号量时，进程会进入休眠等待状态。并将当前进程放入对应的链表中。当有信号量被释放时遍历这个链表，唤醒被休眠的进程继续执行</li>
+</ul>
+</blockquote>
+<h3 id="1-操作信号量的接口"><a href="#1-操作信号量的接口" class="headerlink" title="1) 操作信号量的接口"></a>1) 操作信号量的接口</h3><h4 id="1-初始化信号量"><a href="#1-初始化信号量" class="headerlink" title="1. 初始化信号量"></a>1. 初始化信号量</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DECLARE_MUTEX(name);</td>
+<td>将信号量name初始化为1</td>
+</tr>
+<tr>
+<td>DECLARE_MUTEX_LOCKED(name);</td>
+<td>将信号量name初始化为0</td>
+</tr>
+<tr>
+<td>void init_MUTEX(struct semaphore *sem)</td>
+<td>将信号量sem初始化为1</td>
+</tr>
+<tr>
+<td>void init_NUTEX_LOCKED(struct semaphore *sem);</td>
+<td>将信号量sem初始化为0</td>
+</tr>
+<tr>
+<td>void sema_init(struct semaphore* sem, int val);</td>
+<td>初始化信号量的值为 val</td>
+</tr>
+</tbody></table>
+<h4 id="2-获取信号量的值"><a href="#2-获取信号量的值" class="headerlink" title="2. 获取信号量的值"></a>2. 获取信号量的值</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void&nbsp;down(struct&nbsp;semaphore&nbsp;*sem);</td>
+<td>递减信号量的值，并在必要时一直等待</td>
+</tr>
+<tr>
+<td>int&nbsp;down_interruptible(struct&nbsp;semaphore&nbsp;*sem);</td>
+<td>递减信号量的值，并在必要时一直等待，但是操作是可以中断的，它允许一个在等待的信号量的用户空间进程被用户中断。如果在操作中被中断，函数会返回一个非零值，并且调用者不持有信号量，真确的使用它需要一直检查返回值并针对性地响应。</td>
+</tr>
+<tr>
+<td>int&nbsp;down_trylock(struct&nbsp;seamphore*&nbsp;sem);</td>
+<td>永远不会休眠，如果信号量在调用时不可获得，它会返回一个非零值</td>
+</tr>
+</tbody></table>
+<p>当一个线程成功调用上面的”down”函数之后，该线程就拥有了该信号量。该线程就被赋予了自由访问该信号量保护临界区的权限。当互斥操作完之后必须返回该信号量。</p>
+<h4 id="3-释放信号量的值"><a href="#3-释放信号量的值" class="headerlink" title="3. 释放信号量的值"></a>3. 释放信号量的值</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void up(struct semaphore *sem);</td>
+<td>增加信号量的值并且调用者不在拥有该信号量</td>
+</tr>
+</tbody></table>
+<p>任何拿到信号量的线程都必须通过一次对up的调用而释放该信号量。在出现错误的情况下，经常需要特别小心。如果在拥有一个信号量时发生错误，必须将错误状态返回给调用者之前释放该信号量。忘记释放信号量将导致进程在某些无关的位置被意外挂起，很难复现和跟踪</p>
+<h2 id="3、自旋锁"><a href="#3、自旋锁" class="headerlink" title="3、自旋锁"></a>3、自旋锁</h2><p>自旋锁是一种死等的锁机制，不会进入睡眠，进程会一直等待，直到获到锁为止,内核提供的数据结构如下.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">spinlock</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">raw_spinlock</span> <span class="title">rlock</span>;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_DEBUG_LOCK_ALLOC</span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">define</span> LOCK_PADSIZE (offsetof(struct raw_spinlock, dep_map))</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            u8 __padding[LOCK_PADSIZE];</span><br><span class="line">            <span class="class"><span class="keyword">struct</span> <span class="title">lockdep_map</span> <span class="title">dep_map</span>;</span></span><br><span class="line">        &#125;;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125; <span class="keyword">spinlock_t</span>;</span><br></pre></td></tr></table></figure>
+<h3 id="1-自旋锁操作接口"><a href="#1-自旋锁操作接口" class="headerlink" title="1) 自旋锁操作接口"></a>1) 自旋锁操作接口</h3><h4 id="1-初始化自旋锁"><a href="#1-初始化自旋锁" class="headerlink" title="1. 初始化自旋锁"></a>1. 初始化自旋锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>spin_lock_init(&amp;lock);</td>
+<td>初始化自旋锁 lock</td>
+</tr>
+</tbody></table>
+<h4 id="2-获取自旋锁"><a href="#2-获取自旋锁" class="headerlink" title="2. 获取自旋锁"></a>2. 获取自旋锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>spin_lock(&amp;lock);</td>
+<td>如果能够获得自旋锁则立刻返回，否则将在那里自旋，直到该自旋锁的持有者释放。</td>
+</tr>
+<tr>
+<td>spin_try_lock(&amp;lock);</td>
+<td>尝试获得自旋锁，如果能立刻获得锁返回true，否则立刻返回false，实际不再原地打转。</td>
+</tr>
+</tbody></table>
+<h4 id="3-释放自旋锁"><a href="#3-释放自旋锁" class="headerlink" title="3. 释放自旋锁"></a>3. 释放自旋锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>spin_unlock(&amp;lock);</td>
+<td>释放自旋锁 lock</td>
+</tr>
+</tbody></table>
+<h2 id="4、互斥锁"><a href="#4、互斥锁" class="headerlink" title="4、互斥锁"></a>4、互斥锁</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;互斥锁主要用于实现内核中的互斥访问功能。的数据结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mutex</span> &#123;</span></span><br><span class="line">    <span class="keyword">atomic_long_t</span>       owner;</span><br><span class="line">    <span class="keyword">spinlock_t</span>      wait_lock;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_MUTEX_SPIN_ON_OWNER</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">optimistic_spin_queue</span> <span class="title">osq</span>;</span> <span class="comment">/* Spinner MCS lock */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">wait_list</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_DEBUG_MUTEXES</span></span><br><span class="line">    <span class="keyword">void</span>            *magic;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_DEBUG_LOCK_ALLOC</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">lockdep_map</span>  <span class="title">dep_map</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>同一时刻只有一个线程可以持有mutex</li>
+<li>只有锁持有者可以解锁。不能在一个进程中持有mutex，在另外一个进程中释放</li>
+<li>不允许递归地加锁和解锁</li>
+<li>当进程持有mutex时，进程不可以退出</li>
+<li>mutex必须使用官方API来初始化</li>
+<li>mutex可以睡眠，所以不允许在中断处理程序或者中断下半部中使用，例如tasklet、定时器等</li>
+</ul>
+<p>参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/215308082">手把手教Linux驱动7-内核互斥锁</a></p>
+<h3 id="1-互斥锁接口"><a href="#1-互斥锁接口" class="headerlink" title="1) 互斥锁接口"></a>1) 互斥锁接口</h3><h4 id="1-初始化互斥锁"><a href="#1-初始化互斥锁" class="headerlink" title="1.初始化互斥锁"></a>1.初始化互斥锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DEFINE_MUTEX(name);</td>
+<td>静态创建化互斥锁 name</td>
+</tr>
+<tr>
+<td>mutex_init(&amp;mutex);</td>
+<td>动态初始化互斥锁 mutex</td>
+</tr>
+</tbody></table>
+<h4 id="2-获取互斥锁"><a href="#2-获取互斥锁" class="headerlink" title="2. 获取互斥锁"></a>2. 获取互斥锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mutex_lock(lock)；</td>
+<td>获取互斥锁，获取不到则进入睡眠</td>
+</tr>
+<tr>
+<td>mutex_trylock(lock)；</td>
+<td>尝试获取互斥锁，成功返回1，    失败返回0</td>
+</tr>
+</tbody></table>
+<h4 id="3-释放互斥锁"><a href="#3-释放互斥锁" class="headerlink" title="3. 释放互斥锁"></a>3. 释放互斥锁</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mutex_unlock(lock)；</td>
+<td>释放互斥锁</td>
+</tr>
+</tbody></table>
+<h4 id="4-获取锁状态"><a href="#4-获取锁状态" class="headerlink" title="4. 获取锁状态"></a>4. 获取锁状态</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>mutex_is_lock(lock)；</td>
+<td>如果锁已被使用返回1，否则返回0</td>
+</tr>
+</tbody></table>
+<h1 id="三、linux-队列"><a href="#三、linux-队列" class="headerlink" title="三、linux 队列"></a><div align=center>三、linux 队列</div></h1><h2 id="1、等待队列"><a href="#1、等待队列" class="headerlink" title="1、等待队列"></a>1、等待队列</h2><p>等待队列从功能上可以简单理解为：让进程进入睡眠，在你想让他工作的时候唤醒。它有两部分组成首先是挂接我们等待队列项的等待头，等待队列头的数据结构描述如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">wait_queue_head</span> &#123;</span></span><br><span class="line">    <span class="keyword">spinlock_t</span>      lock; <span class="comment">// 在对task_list与操作的过程中，使用该锁实现对等待队列的互斥访问。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">task_list</span>;</span> <span class="comment">// 链接等待队列项 wait_queue_t</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> __<span class="title">wait_queue_head</span> <span class="title">wait_queue_head_t</span>;</span></span><br></pre></td></tr></table></figure>
+<p>而挂接在其上面的等待队列项的数据局结构如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> __<span class="title">wait_queue</span> <span class="title">wait_queue_t</span>;</span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">int</span> <span class="params">(*<span class="keyword">wait_queue_func_t</span>)</span><span class="params">(<span class="keyword">wait_queue_t</span> *wait, <span class="keyword">unsigned</span> mode, <span class="keyword">int</span> flags, <span class="keyword">void</span> *key)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">default_wake_function</span><span class="params">(<span class="keyword">wait_queue_t</span> *wait, <span class="keyword">unsigned</span> mode, <span class="keyword">int</span> flags, <span class="keyword">void</span> *key)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* __wait_queue::flags */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> WQ_FLAG_EXCLUSIVE   0x01</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> WQ_FLAG_WOKEN       0x02</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">wait_queue</span> &#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        flags;</span><br><span class="line">    <span class="keyword">void</span>            *<span class="keyword">private</span>;</span><br><span class="line">    <span class="keyword">wait_queue_func_t</span>   func;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">task_list</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="1-等待队列接口"><a href="#1-等待队列接口" class="headerlink" title="1) 等待队列接口"></a>1) 等待队列接口</h3><h4 id="1-创建与初始化"><a href="#1-创建与初始化" class="headerlink" title="1. 创建与初始化"></a>1. 创建与初始化</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DECLARE_WAIT_QUEUE_HEAD(name)</td>
+<td>声明等待队列头 name</td>
+</tr>
+<tr>
+<td>init_waitqueue_head(name)</td>
+<td>初始化等待队列头 name</td>
+</tr>
+<tr>
+<td>DECLARE_WAITQUEUE(name, tsk)</td>
+<td>定义等待队列成员 name</td>
+</tr>
+</tbody></table>
+<h4 id="2-添加移除等待队列"><a href="#2-添加移除等待队列" class="headerlink" title="2. 添加移除等待队列"></a>2. 添加移除等待队列</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void add_wait_queue(wait_queue_head_t *q, wait_queue_t *wait);</td>
+<td>将等待队列成员 wait，添加进入等待队列头 q</td>
+</tr>
+<tr>
+<td>void remove_wait_queue(wait_queue_head_t *q, wait_queue_t *wait);</td>
+<td>从等待队列头移除等待队列成员 wait</td>
+</tr>
+</tbody></table>
+<h4 id="3-进程休眠"><a href="#3-进程休眠" class="headerlink" title="3. 进程休眠"></a>3. 进程休眠</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>wait_event(wq,&nbsp;condition)</td>
+<td>如果condition为0，则进程休眠，且休眠状态不能被中断打断</td>
+</tr>
+<tr>
+<td>wait_event_timeout(wq,&nbsp;condition,&nbsp;timeout)</td>
+<td>如果condition为0，则进入休眠，当 timeout 到了则唤醒进程不管此时condition为真为假都会返回</td>
+</tr>
+<tr>
+<td>wait_event_interruptible(wq,&nbsp;condition)</td>
+<td>如果condition为0，则进程休眠，休眠状态可以被中断打断，当休眠被中断打断时返回0，这时驱动应返回 -ERESTARTSYS</td>
+</tr>
+<tr>
+<td>wait_event_interruptible_timeout(wq,&nbsp;condition,&nbsp;timeout)</td>
+<td>如果condition为0，则进程休眠，休眠状态可以被中断打断，当休眠被中断打断时返回0，这时驱动应返回 -ERESTARTSY，当 timeout 到了则唤醒进程不管此时condition为真为假都会返回</td>
+</tr>
+</tbody></table>
+<h4 id="4-唤醒进程"><a href="#4-唤醒进程" class="headerlink" title="4. 唤醒进程"></a>4. 唤醒进程</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>void&nbsp;wake_up(wait_queue_head_t&nbsp;*q);</td>
+<td>唤醒等待队列 q 上的进程，如果 condition 为真则返回</td>
+</tr>
+<tr>
+<td>void&nbsp;wake_up_interruptible(wait_queue_head_t&nbsp;*q);</td>
+<td>唤醒等待队列 q 上的进程，如果 condition 为真则返回</td>
+</tr>
+</tbody></table>
+<h2 id="2、工作队列"><a href="#2、工作队列" class="headerlink" title="2、工作队列"></a>2、工作队列</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;工作队列（work queue）是一种将工作推后执行的形式，它和tasklet有所不同。工作队列可以把工作推后，交由一个内核线程去执行，也就是说，这个下半部分可以在进程上下文中执行。这样，通过工作队列执行的代码能占尽进程上下文的所有优势。最重要的就是工作队列允许被重新调度甚至是睡眠。它的数据结构如下</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="keyword">work_func_t</span>)</span><span class="params">(struct work_struct *work)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">work_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">atomic_long_t</span> data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">entry</span>;</span></span><br><span class="line">    <span class="keyword">work_func_t</span> func;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_LOCKDEP</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">lockdep_map</span> <span class="title">lockdep_map</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/bullbat/article/details/7410563">Linux内核实践之工作队列</a></p>
+<h3 id="3-操作函数"><a href="#3-操作函数" class="headerlink" title="3) 操作函数"></a>3) 操作函数</h3><h4 id="1-初始化工作队列"><a href="#1-初始化工作队列" class="headerlink" title="1. 初始化工作队列"></a>1. 初始化工作队列</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>INIT_WORK(work,func)</td>
+<td>初始化工作队列项 work，并设置回调函数func</td>
+</tr>
+<tr>
+<td>DECLARE_WORK(name,func)</td>
+<td>声明一个等待队列项 name，并设置回调函数func</td>
+</tr>
+</tbody></table>
+<h4 id="2-调度工作队列"><a href="#2-调度工作队列" class="headerlink" title="2. 调度工作队列"></a>2. 调度工作队列</h4><table>
+<thead>
+<tr>
+<th>函数接口</th>
+<th>接口含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>schedule_work(&amp;work)</td>
+<td>调度工作队列</td>
+</tr>
+<tr>
+<td>schedule_delayed_work(&amp;work,tick)</td>
+<td>延时tick个滴答应答之后调度工作队列</td>
+</tr>
+</tbody></table>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>braon-z
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://example.com/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" title="linux驱动-基础知识">https://example.com/2020/01/03/linux驱动-基础知识/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E9%A9%B1%E5%8A%A8/" rel="tag"><i class="fa fa-tag"></i> 驱动</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/01/03/c%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" rel="next" title="c语言基础知识">
+                  c语言基础知识 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">braon-z</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">342k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:11</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script>
+NexT.utils.loadComments('#valine-comments', () => {
+  NexT.utils.getScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', () => {
+    new Valine(Object.assign({"enable":true,"appId":"VsC1eQwQ4Xltm5eA9iYGp3VU-gzGzoHsz","appKey":"kyfyE4RWl6aIojedbxcuJa3V","serverURLs":null,"placeholder":"Just go go","avatar":"mm","meta":["nick","mail","link"],"pageSize":10,"lang":null,"visitor":false,"comment_count":true,"recordIP":false,"enableQQ":false,"requiredFields":[]}, {
+      el: '#valine-comments',
+      path: "/2020/01/03/linux%E9%A9%B1%E5%8A%A8-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/",
+      serverURLs: "https://vsc1eqwq.api.lncldglobal.com"
+    }));
+  }, window.Valine);
+});
+</script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+<div class="moon-menu">
+  <div class="moon-menu-items">
+    
+    <div class="moon-menu-item" onclick="back2bottom()">
+      <i class='fa fa-chevron-down'></i>    </div>
+    
+    <div class="moon-menu-item" onclick="back2top()">
+      <i class='fa fa-chevron-up'></i>    </div>
+    
+  </div>
+  <div class="moon-menu-button">
+    <svg class="moon-menu-bg">
+      <circle class="moon-menu-cricle" cx="50%" cy="50%" r="44%"></circle>
+      <circle class="moon-menu-border" cx="50%" cy="50%" r="48%"></circle>
+    </svg>
+    <div class="moon-menu-content">
+      <div class="moon-menu-icon"><i class='fas fa-ellipsis-v'></i></div>
+      <div class="moon-menu-text"></div>
+    </div>
+  </div>
+</div><script src="/js/injector.js"></script>
+</body>
+</html>
