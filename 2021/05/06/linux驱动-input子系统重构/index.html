@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":"ture","mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="input系统，内核里面比较简单的子系统，也比较常用，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="linux驱动-input子系统">
+<meta property="og:url" content="https://example.com/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/index.html">
+<meta property="og:site_name" content="braon-z&#39;s blog">
+<meta property="og:description" content="input系统，内核里面比较简单的子系统，也比较常用，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/input/input%E6%A8%A1%E5%9E%8B%E6%A1%86%E6%9E%B6.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1624851767;1984848167&q-key-time=1624851767;1984848167&q-header-list=&q-url-param-list=&q-signature=9594514eb336a368f374eeb33de380fce0ff3589">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/input/1.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1602247945;2379847945&q-key-time=1602247945;2379847945&q-header-list=&q-url-param-list=&q-signature=bd099cbf269f41ddf63c19417c91ec61d8248006">
+<meta property="article:published_time" content="2021-05-06T05:46:03.000Z">
+<meta property="article:modified_time" content="2021-06-30T03:58:08.637Z">
+<meta property="article:author" content="braon-z">
+<meta property="article:tag" content="input">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/input/input%E6%A8%A1%E5%9E%8B%E6%A1%86%E6%9E%B6.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1624851767;1984848167&q-key-time=1624851767;1984848167&q-header-list=&q-url-param-list=&q-signature=9594514eb336a368f374eeb33de380fce0ff3589">
+
+
+<link rel="canonical" href="https://example.com/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>linux驱动-input子系统 | braon-z's blog</title>
+  
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">braon-z's blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-commonweal"><a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%A1%86%E6%9E%B6"><span class="nav-text">一、框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E8%BE%93%E5%85%A5%E6%A0%B8%E5%BF%83%E5%B1%82"><span class="nav-text">二、输入核心层</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E7%9B%B8%E5%85%B3%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">1、相关数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-input-handler"><span class="nav-text">1) input_handler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-input-device-id"><span class="nav-text">2) input_device_id</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-input-dev"><span class="nav-text">3) input_dev</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-input-handle"><span class="nav-text">4) input_handle</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-input-event"><span class="nav-text">5) input_event</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81%E4%B8%89%E8%A7%92%E5%85%B3%E7%B3%BB"><span class="nav-text">2、三角关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E6%A0%B8%E5%BF%83%E5%B1%82%E7%9B%B8%E5%85%B3%E6%8E%A5%E5%8F%A3"><span class="nav-text">3、核心层相关接口</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-input-register-handler"><span class="nav-text">1) input_register_handler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-input-attach-handler"><span class="nav-text">2) input_attach_handler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-input-match-device"><span class="nav-text">3) input_match_device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-input-match-device-id"><span class="nav-text">4) input_match_device_id</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-input-register-device"><span class="nav-text">4) input_register_device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-input-register-handle"><span class="nav-text">5) input_register_handle</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81evdev-%E5%88%86%E6%9E%90"><span class="nav-text">三、evdev 分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-text">1、数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-evdev"><span class="nav-text">1) evdev</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89evdev-client"><span class="nav-text">2）evdev_client</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81evdev-%E7%9A%84%E6%B3%A8%E5%86%8C"><span class="nav-text">2、evdev 的注册</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81%E4%B8%8E%E8%AE%BE%E5%A4%87%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5"><span class="nav-text">3、与设备建立连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81%E6%89%93%E5%BC%80%E8%AE%BE%E5%A4%87"><span class="nav-text">4、打开设备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%E3%80%81%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE"><span class="nav-text">5、读取数据</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E4%BA%8B%E4%BB%B6%E4%B8%8A%E6%8A%A5"><span class="nav-text">四、事件上报</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="braon-z"
+      src="/images/wallhaven.jfif">
+  <p class="site-author-name" itemprop="name">braon-z</p>
+  <div class="site-description" itemprop="description"> 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:yourname@gmail.com" title="E-Mail → mailto:yourname@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+<div style="">
+  <canvas id="canvas" style="width:60%;">当前浏览器不支持canvas，请更换浏览器后再试</canvas>
+</div>
+<script>
+(function(){
+
+   var digit=
+    [
+        [
+            [0,0,1,1,1,0,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,0,1,1,0],
+            [0,0,1,1,1,0,0]
+        ],//0
+        [
+            [0,0,0,1,1,0,0],
+            [0,1,1,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [1,1,1,1,1,1,1]
+        ],//1
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,1,1],
+            [1,1,1,1,1,1,1]
+        ],//2
+        [
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//3
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,0],
+            [0,0,1,1,1,1,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,1,1,0],
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,1]
+        ],//4
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,1,1,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//5
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//6
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0]
+        ],//7
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//8
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,1,1,0,0,0,0]
+        ],//9
+        [
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0]
+        ]//:
+    ];
+
+var canvas = document.getElementById('canvas');
+
+if(canvas.getContext){
+    var cxt = canvas.getContext('2d');
+    //声明canvas的宽高
+    var H = 100,W = 700;
+    canvas.height = H;
+    canvas.width = W;
+    cxt.fillStyle = '#f00';
+    cxt.fillRect(10,10,50,50);
+
+    //存储时间数据
+    var data = [];
+    //存储运动的小球
+    var balls = [];
+    //设置粒子半径
+    var R = canvas.height/20-1;
+    (function(){
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        //存储时间数字，由十位小时、个位小时、冒号、十位分钟、个位分钟、冒号、十位秒钟、个位秒钟这7个数字组成
+        data.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+    })();
+
+    /*生成点阵数字*/
+    function renderDigit(index,num){
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    cxt.beginPath();
+                    cxt.arc(14*(R+2)*index + j*2*(R+1)+(R+1),i*2*(R+1)+(R+1),R,0,2*Math.PI);
+                    cxt.closePath();
+                    cxt.fill();
+                }
+            }
+        }
+    }
+
+    /*更新时钟*/
+    function updateDigitTime(){
+        var changeNumArray = [];
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        var NewData = [];
+        NewData.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+        for(var i = data.length-1; i >=0 ; i--){
+            //时间发生变化
+            if(NewData[i] !== data[i]){
+                //将变化的数字值和在data数组中的索引存储在changeNumArray数组中
+                changeNumArray.push(i+'_'+(Number(data[i])+1)%10);
+            }
+        }
+        //增加小球
+        for(var i = 0; i< changeNumArray.length; i++){
+            addBalls.apply(this,changeNumArray[i].split('_'));
+        }
+        data = NewData.concat();
+    }
+
+    /*更新小球状态*/
+    function updateBalls(){
+        for(var i = 0; i < balls.length; i++){
+            balls[i].stepY += balls[i].disY;
+            balls[i].x += balls[i].stepX;
+            balls[i].y += balls[i].stepY;
+            if(balls[i].x > W + R || balls[i].y > H + R){
+                balls.splice(i,1);
+                i--;
+            }
+        }
+    }
+
+    /*增加要运动的小球*/
+    function addBalls(index,num){
+        var numArray = [1,2,3];
+        var colorArray =  ["#3BE","#09C","#A6C","#93C","#9C0","#690","#FB3","#F80","#F44","#C00"];
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    var ball = {
+                        x:14*(R+2)*index + j*2*(R+1)+(R+1),
+                        y:i*2*(R+1)+(R+1),
+                        stepX:Math.floor(Math.random() * 4 -2),
+                        stepY:-2*numArray[Math.floor(Math.random()*numArray.length)],
+                        color:colorArray[Math.floor(Math.random()*colorArray.length)],
+                        disY:1
+                    };
+                    balls.push(ball);
+                }
+            }
+        }
+    }
+
+    /*渲染*/
+    function render(){
+        //重置画布宽度，达到清空画布的效果
+        canvas.height = 100;
+        //渲染时钟
+        for(var i = 0; i < data.length; i++){
+            renderDigit(i,data[i]);
+        }
+        //渲染小球
+        for(var i = 0; i < balls.length; i++){
+            cxt.beginPath();
+            cxt.arc(balls[i].x,balls[i].y,R,0,2*Math.PI);
+            cxt.fillStyle = balls[i].color;
+            cxt.closePath();
+            cxt.fill();
+        }
+    }
+
+    clearInterval(oTimer);
+    var oTimer = setInterval(function(){
+        //更新时钟
+        updateDigitTime();
+        //更新小球状态
+        updateBalls();
+        //渲染
+        render();
+    },50);
+}
+
+})();
+</script>
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://example.com/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/wallhaven.jfif">
+      <meta itemprop="name" content="braon-z">
+      <meta itemprop="description" content=" 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="braon-z's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          linux驱动-input子系统
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-05-06 13:46:03" itemprop="dateCreated datePublished" datetime="2021-05-06T13:46:03+08:00">2021-05-06</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-06-30 11:58:08" itemprop="dateModified" datetime="2021-06-30T11:58:08+08:00">2021-06-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%A9%B1%E5%8A%A8/" itemprop="url" rel="index"><span itemprop="name">驱动</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Valine：</span>
+  
+    <a title="valine" href="/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>19k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>18 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>input系统，内核里面比较简单的子系统，也比较常用，</p>
+<a id="more"></a>
+
+<h2 id="一、框架"><a href="#一、框架" class="headerlink" title="一、框架"></a>一、框架</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;input 子系统 linux 为输入设备（键盘，鼠标，触摸屏等）提供了统一的接口。它的框架有三层组成，设备驱动层(drivers)，核心层，事件处理层，如下图所示。其实看了源码就会发现，所谓的 input 子系统本质也就是字符设备而已，不过内核将常用的设备接口封装在里面了，直接使用就行了。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/input/input%E6%A8%A1%E5%9E%8B%E6%A1%86%E6%9E%B6.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1624851767;1984848167&q-key-time=1624851767;1984848167&q-header-list=&q-url-param-list=&q-signature=9594514eb336a368f374eeb33de380fce0ff3589" width="100%" height="100%" alt="input 子系统的系统框架">
+
+<h2 id="二、输入核心层"><a href="#二、输入核心层" class="headerlink" title="二、输入核心层"></a>二、输入核心层</h2><p>输入核心层在整个框架中处于承上启下的作用，它提供的功能</p>
+<ol>
+<li>在/sys/class/ 下创建一个类 名字叫做 input，在/proc下面建立相关的文件，注册一个字符设备 input</li>
+<li>向设备驱动层提供注册函数 input_register_device</li>
+<li>向事件处理层提供注册函数 input_register_handler</li>
+<li>提供匹配函数 input_attach_handler 用于建立 input_dev 和 input_handler 之间的连接，并对其进行管理。</li>
+<li>提供上报中转接口 input_event</li>
+</ol>
+<h3 id="1、相关数据结构"><a href="#1、相关数据结构" class="headerlink" title="1、相关数据结构"></a>1、相关数据结构</h3><h4 id="1-input-handler"><a href="#1-input-handler" class="headerlink" title="1) input_handler"></a>1) input_handler</h4><p>每一个 input_handler 结构都是一类事件处理接口</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_handler</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> *<span class="keyword">private</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> (*event)(struct input_handle *handle, <span class="keyword">unsigned</span> <span class="keyword">int</span> type, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value);</span><br><span class="line">    <span class="keyword">void</span> (*events)(struct input_handle *handle, <span class="keyword">const</span> struct input_value *vals, <span class="keyword">unsigned</span> <span class="keyword">int</span> count);</span><br><span class="line">    <span class="keyword">bool</span> (*filter)(struct input_handle *handle, <span class="keyword">unsigned</span> <span class="keyword">int</span> type, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 匹配时调用这个函数，如果返回 0 则匹配失败</span></span><br><span class="line">    <span class="keyword">bool</span> (*match)(struct input_handler *handler, struct input_dev *dev);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 匹配成功调用这个函数建立连接</span></span><br><span class="line">    <span class="keyword">int</span> (*connect)(struct input_handler *handler, struct input_dev *dev, <span class="keyword">const</span> struct input_device_id *id);</span><br><span class="line">    <span class="keyword">void</span> (*disconnect)(struct input_handle *handle);</span><br><span class="line">    <span class="keyword">void</span> (*start)(struct input_handle *handle);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">bool</span> legacy_minors;</span><br><span class="line">    <span class="keyword">int</span> minor;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name; <span class="comment">//handler 的名字</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 能够支持哪一些输入设备 */</span></span><br><span class="line">    <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">input_device_id</span> *<span class="title">id_table</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">h_list</span>;</span> <span class="comment">//用来存放input_handle-&gt;h_node</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">node</span>;</span>   <span class="comment">//链接进入 input_handler_list</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;在老式的 2.6 内核， input_handler 在内核中由 input_table 管理，它是在 input.c 中的全局数组，表示支持的输入设备类型最多有8类，其中包含 mousedev，joydev，evdev 等。 input 子系统的主设备号固定为 INPUT_MAJOR 这个宏被初始化为 13 ,次设备号为 0~255，input_table 数组有8个 input_handler,这 8 个input_handler 将 256 个设备号划分为8份，即每一个 input_handler 最多支持 32个字符设备节点。evdev 的次设备号起始为 EVDEV_MINOR_BASE ，这个宏被初始化为 64，因此 evdev 对应的 table 数组项为 input_table[2]。<br>&nbsp;&nbsp;&nbsp;&nbsp;而新的内核则使用了更加方便的方式，直接将 input_handler 的管理由核心层移交给事件处理层来管理，使用 input_handle 来动态管理。每个连接成功的 input_handler 和 input_dev 都会动态创建一个 input_handle 来管理，当卸载时释放掉这个结构就可以了。</p>
+<h4 id="2-input-device-id"><a href="#2-input-device-id" class="headerlink" title="2) input_device_id"></a>2) input_device_id</h4><p>能够支持哪一些输入设备，用于匹配</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_device_id</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="meta">#<span class="meta-keyword">define</span> INPUT_DEVICE_ID_MATCH_BUS       1</span></span><br><span class="line">    <span class="meta">#<span class="meta-keyword">define</span> INPUT_DEVICE_ID_MATCH_VENDOR    2</span></span><br><span class="line">    <span class="meta">#<span class="meta-keyword">define</span> INPUT_DEVICE_ID_MATCH_PRODUCT   4</span></span><br><span class="line">    <span class="meta">#<span class="meta-keyword">define</span> INPUT_DEVICE_ID_MATCH_VERSION   8</span></span><br><span class="line">    <span class="comment">// 用于设置需要匹配的内容，虽然内核提供了许多选择</span></span><br><span class="line">    <span class="comment">// 但是 input_match_device_id 函数也就用到了上面四个而已，</span></span><br><span class="line">    <span class="comment">// 其他的匹配项目或许是用于客制化吧。</span></span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> flags; </span><br><span class="line"></span><br><span class="line">    __u16 bustype;</span><br><span class="line">    __u16 vendor;</span><br><span class="line">    __u16 product;</span><br><span class="line">    __u16 version;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> evbit[INPUT_DEVICE_ID_EV_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> keybit[INPUT_DEVICE_ID_KEY_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> relbit[INPUT_DEVICE_ID_REL_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> absbit[INPUT_DEVICE_ID_ABS_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> mscbit[INPUT_DEVICE_ID_MSC_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> ledbit[INPUT_DEVICE_ID_LED_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> sndbit[INPUT_DEVICE_ID_SND_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> ffbit[INPUT_DEVICE_ID_FF_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> swbit[INPUT_DEVICE_ID_SW_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> propbit[INPUT_DEVICE_ID_PROP_MAX / BITS_PER_LONG + <span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">kernel_ulong_t</span> driver_info; <span class="comment">//设置为 1 则表示默认进行匹配。</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="3-input-dev"><a href="#3-input-dev" class="headerlink" title="3) input_dev"></a>3) input_dev</h4><p>每一个 input_dev 都是一个具体的硬件设备，里面包含该硬件设备的信息和处理函数，该结构也是驱动要处理的结构。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_dev</span> &#123;</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name; <span class="comment">// 设备名</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *phys; <span class="comment">// 设备节点名称</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *uniq; <span class="comment">// 唯一的ID号，</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_id</span> <span class="title">id</span>;</span> <span class="comment">// 输入设备ID，用于 handler 匹配</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> propbit[BITS_TO_LONGS(INPUT_PROP_CNT)];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> evbit[BITS_TO_LONGS(EV_CNT)];  <span class="comment">//设备支持的事件类型</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> keybit[BITS_TO_LONGS(KEY_CNT)]; <span class="comment">//按键 ex：上下左右 home</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> relbit[BITS_TO_LONGS(REL_CNT)]; <span class="comment">//相对坐标 ex 鼠标</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> absbit[BITS_TO_LONGS(ABS_CNT)]; <span class="comment">//绝对坐标 ex 触摸屏</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> mscbit[BITS_TO_LONGS(MSC_CNT)]; <span class="comment">//其他功能</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> ledbit[BITS_TO_LONGS(LED_CNT)]; <span class="comment">//指示灯</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sndbit[BITS_TO_LONGS(SND_CNT)]; <span class="comment">//声音或警报</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> ffbit[BITS_TO_LONGS(FF_CNT)]; <span class="comment">//作用力</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> swbit[BITS_TO_LONGS(SW_CNT)]; <span class="comment">//开关</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> hint_events_per_packet;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> keycodemax; <span class="comment">//设备支持最大按键值个数</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> keycodesize; <span class="comment">//每个按键字节大小</span></span><br><span class="line">    <span class="keyword">void</span> *keycode; <span class="comment">//按键池，指向按键值数组首地址</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> (*setkeycode)(struct input_dev *dev,</span><br><span class="line">              <span class="keyword">const</span> struct input_keymap_entry *ke,</span><br><span class="line">              <span class="keyword">unsigned</span> <span class="keyword">int</span> *old_keycode); <span class="comment">// 修改按键值</span></span><br><span class="line">    <span class="keyword">int</span> (*getkeycode)(struct input_dev *dev,</span><br><span class="line">              struct input_keymap_entry *ke); <span class="comment">// 获取按键值</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">ff_device</span> *<span class="title">ff</span>;</span> <span class="comment">//强制更新输入设备的部分内容</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> repeat_key; <span class="comment">//重复按键的键值</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timer_list</span> <span class="title">timer</span>;</span> <span class="comment">//连击时定时器</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> rep[REP_CNT]; <span class="comment">//按键重复</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_mt</span> *<span class="title">mt</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_absinfo</span> *<span class="title">absinfo</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> key[BITS_TO_LONGS(KEY_CNT)];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> led[BITS_TO_LONGS(LED_CNT)];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> snd[BITS_TO_LONGS(SND_CNT)];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sw[BITS_TO_LONGS(SW_CNT)];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> (*open)(struct input_dev *dev); <span class="comment">//open 回调接口</span></span><br><span class="line">    <span class="keyword">void</span> (*close)(struct input_dev *dev);</span><br><span class="line">    <span class="keyword">int</span> (*flush)(struct input_dev *dev, struct file *file);</span><br><span class="line">    <span class="keyword">int</span> (*event)(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> type, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value);</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_handle</span> __<span class="title">rcu</span> *<span class="title">grab</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">spinlock_t</span> event_lock;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mutex</span> <span class="title">mutex</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> users; <span class="comment">//设备使用计数</span></span><br><span class="line">    <span class="keyword">bool</span> going_away;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">device</span> <span class="title">dev</span>;</span> <span class="comment">//设备结构</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">h_list</span>;</span> <span class="comment">// handle list</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">node</span>;</span>   <span class="comment">// input dev list</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> num_vals;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> max_vals;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_value</span> *<span class="title">vals</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">bool</span> devres_managed;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="4-input-handle"><a href="#4-input-handle" class="headerlink" title="4) input_handle"></a>4) input_handle</h4><p>用于连接上面的 input_dev 和 input_handler</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_handle</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> *<span class="keyword">private</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> open;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_dev</span> *<span class="title">dev</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_handler</span> *<span class="title">handler</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">d_node</span>;</span> <span class="comment">// 链接到 handle-&gt;dev-&gt;h_list</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span>    <span class="title">h_node</span>;</span> <span class="comment">// 链接到 handler-&gt;h_list</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="5-input-event"><a href="#5-input-event" class="headerlink" title="5) input_event"></a>5) input_event</h4><p>上报的事件由 input_event 描述</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">time</span>;</span></span><br><span class="line">    __u16 type;    <span class="comment">//事件类型</span></span><br><span class="line">    __u16 code;    <span class="comment">//事件</span></span><br><span class="line">    __s32 value;   <span class="comment">//事件值</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="2、三角关系"><a href="#2、三角关系" class="headerlink" title="2、三角关系"></a>2、三角关系</h3><p>对于每一个和 input_handler 匹配成功的 input_dev 内核都会在connect函数中创建一个 input_handle 结构，用于建立以及维护input_handler和input_dev之间的联系。input_handle作为 input_dev 和 input_handler 沟通的桥梁。建立联系的过程如下：</p>
+<ol>
+<li>调用 input_register_handler 注册 input_dev 结构</li>
+<li>在 input_register_handler 中遍历 input_handler_list 中所有的 input_handler,对每一个 input_hander 调用 input_attach_handler 进行匹配 (提示:这说明input_dev可以和多个input_hander 匹配成功)</li>
+<li>匹配成功则调用 input_handler.connect函数</li>
+<li>connect 函数中将 input_dev 和 input_handler 赋值给 input_handle.dev 和 input_handle.handler</li>
+<li>调用 input_register_handle 将 handle-&gt;d_node 链入 handle-&gt;dev-&gt;h_list 同时将 handle-&gt;h_node 链入 handler-&gt;h_list</li>
+</ol>
+<div align=left> <img width=800 src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/input/1.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1602247945;2379847945&q-key-time=1602247945;2379847945&q-header-list=&q-url-param-list=&q-signature=bd099cbf269f41ddf63c19417c91ec61d8248006" > </div>
+
+<p>于是 input_dev 可以利用 input_dev.h_list 中保存的d_node 找到 input_handle 结构从而找到对应的 input_handle.handler 中保存的 input_handler 结构,同理 input_hander 也可以借助 input_handle 找到对应 的input_dev。上述只是简单的描述了三者的关系，而input_dev和input_handler，并不是<font color=red><strong>简单的一对一的关系，而是多对多的关系。</strong></font>。</p>
+<h3 id="3、核心层相关接口"><a href="#3、核心层相关接口" class="headerlink" title="3、核心层相关接口"></a>3、核心层相关接口</h3><h4 id="1-input-register-handler"><a href="#1-input-register-handler" class="headerlink" title="1) input_register_handler"></a>1) input_register_handler</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">input_register_handler</span><span class="params">(struct input_handler *handler)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_dev</span> *<span class="title">dev</span>;</span></span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line"></span><br><span class="line">    error = mutex_lock_interruptible(&amp;input_mutex);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">return</span> error;</span><br><span class="line"></span><br><span class="line">    INIT_LIST_HEAD(&amp;handler-&gt;h_list);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//将 handler 链接到 input_handler_list</span></span><br><span class="line">    list_add_tail(&amp;handler-&gt;node, &amp;input_handler_list);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//对遍历 input_dev_list 上的所有 dev 对每一个 dev 都调用 input_attach_handler 函数</span></span><br><span class="line">    list_for_each_entry(dev, &amp;input_dev_list, node)</span><br><span class="line">        input_attach_handler(dev, handler);</span><br><span class="line"></span><br><span class="line">    input_wakeup_procfs_readers();</span><br><span class="line"></span><br><span class="line">    mutex_unlock(&amp;input_mutex);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line">EXPORT_SYMBOL(input_register_handler);</span><br></pre></td></tr></table></figure>
+<h4 id="2-input-attach-handler"><a href="#2-input-attach-handler" class="headerlink" title="2) input_attach_handler"></a>2) input_attach_handler</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">input_attach_handler</span><span class="params">(struct input_dev *dev, struct input_handler *handler)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">input_device_id</span> *<span class="title">id</span>;</span></span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line">    <span class="comment">// 调用匹配接口</span></span><br><span class="line">    id = input_match_device(handler, dev);</span><br><span class="line">    <span class="keyword">if</span> (!id)</span><br><span class="line">        <span class="keyword">return</span> -ENODEV;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//匹配成功则调用 handler-&gt;connect 函数建立连接</span></span><br><span class="line">    error = handler-&gt;connect(handler, dev, id);</span><br><span class="line">    <span class="keyword">if</span> (error &amp;&amp; error != -ENODEV)</span><br><span class="line">        pr_err(<span class="string">&quot;failed to attach handler %s to device %s, error: %d\n&quot;</span>,</span><br><span class="line">               handler-&gt;name, kobject_name(&amp;dev-&gt;dev.kobj), error);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> error;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-input-match-device"><a href="#3-input-match-device" class="headerlink" title="3) input_match_device"></a>3) input_match_device</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">const</span> struct input_device_id *<span class="title">input_match_device</span><span class="params">(struct input_handler *handler,</span></span></span><br><span class="line"><span class="function"><span class="params">                            struct input_dev *dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">input_device_id</span> *<span class="title">id</span>;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 判断是否有 flag 或者 driver_info, 如果有设置则进行匹配</span></span><br><span class="line">    <span class="comment">// 匹配成功如果有 handler-&gt;match 函数时，只有该函数返回为真时表示匹配成功</span></span><br><span class="line">    <span class="keyword">for</span> (id = handler-&gt;id_table; id-&gt;flags || id-&gt;driver_info; id++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (input_match_device_id(dev, id) &amp;&amp;</span><br><span class="line">            (!handler-&gt;match || handler-&gt;match(handler, dev))) &#123;</span><br><span class="line">            <span class="keyword">return</span> id;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="4-input-match-device-id"><a href="#4-input-match-device-id" class="headerlink" title="4) input_match_device_id"></a>4) input_match_device_id</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">input_match_device_id</span><span class="params">(<span class="keyword">const</span> struct input_dev *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">               <span class="keyword">const</span> struct input_device_id *id)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (id-&gt;flags &amp; INPUT_DEVICE_ID_MATCH_BUS) <span class="comment">// 匹配总线</span></span><br><span class="line">        <span class="keyword">if</span> (id-&gt;bustype != dev-&gt;id.bustype)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (id-&gt;flags &amp; INPUT_DEVICE_ID_MATCH_VENDOR)</span><br><span class="line">        <span class="keyword">if</span> (id-&gt;vendor != dev-&gt;id.vendor) <span class="comment">// 匹配供应商</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (id-&gt;flags &amp; INPUT_DEVICE_ID_MATCH_PRODUCT)</span><br><span class="line">        <span class="keyword">if</span> (id-&gt;product != dev-&gt;id.product) <span class="comment">// 匹配产品</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (id-&gt;flags &amp; INPUT_DEVICE_ID_MATCH_VERSION)</span><br><span class="line">        <span class="keyword">if</span> (id-&gt;version != dev-&gt;id.version) <span class="comment">// 匹配版本</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// bitmap_subset 这个函数的算法也是挺有意思的，感兴趣可以看看源码，下面直接给出结论</span></span><br><span class="line">    <span class="comment">// static inline int bitmap_subset(const unsigned long *src1, const unsigned long *src2, unsigned int nbits)</span></span><br><span class="line">    <span class="comment">// 当 src1 的第 n 位 (n &lt; nbits) 为 0 时，src2 的第 n 位为任何数结果为真</span></span><br><span class="line">    <span class="comment">// 当 src1 的第 n 位 (n &lt; nbits) 为 1 时，src2 的第 n 位为 1 是结果为真，否则结果为假</span></span><br><span class="line">    <span class="comment">// 只有当两者的 nbits 描述的位都位真时返回真</span></span><br><span class="line">    <span class="comment">// 举例说明1： bitmap_subset(5,3,3);</span></span><br><span class="line">    <span class="comment">// 5 二进制表示:    1     0     1</span></span><br><span class="line">    <span class="comment">// 3 二进制表示：   0     1     1</span></span><br><span class="line">    <span class="comment">// 计算结果         0  &amp;  1  &amp;  1  ==&gt; 0</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// 举例说明2： bitmap_subset(5,7,2); //只计算两位忽略最高位</span></span><br><span class="line">    <span class="comment">// 5 二进制表示:    1     0     1</span></span><br><span class="line">    <span class="comment">// 3 二进制表示：   0     1     1</span></span><br><span class="line">    <span class="comment">// 计算结果               1  &amp;  1  ==&gt; 1        </span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// 引申到这个函数的功能就是，当 input_handler 的事件类型某一位设置位 0 则表示兼容。</span></span><br><span class="line">    <span class="comment">// 如果设置位 1 则表示，当设备不支持时则无法匹配成功。</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!bitmap_subset(id-&gt;evbit, dev-&gt;evbit, EV_MAX) ||     <span class="comment">// 匹配支持的事件类型</span></span><br><span class="line">        !bitmap_subset(id-&gt;keybit, dev-&gt;keybit, KEY_MAX) ||  <span class="comment">// 匹配支持的按键事件</span></span><br><span class="line">        !bitmap_subset(id-&gt;relbit, dev-&gt;relbit, REL_MAX) ||  <span class="comment">// 匹配支持的相对坐标事件</span></span><br><span class="line">        !bitmap_subset(id-&gt;absbit, dev-&gt;absbit, ABS_MAX) ||  <span class="comment">// 匹配支持的绝对坐标事件</span></span><br><span class="line">        !bitmap_subset(id-&gt;mscbit, dev-&gt;mscbit, MSC_MAX) ||  <span class="comment">// 匹配支持的其他功能</span></span><br><span class="line">        !bitmap_subset(id-&gt;ledbit, dev-&gt;ledbit, LED_MAX) ||  <span class="comment">// 匹配支持的指示灯</span></span><br><span class="line">        !bitmap_subset(id-&gt;sndbit, dev-&gt;sndbit, SND_MAX) ||  </span><br><span class="line">        !bitmap_subset(id-&gt;ffbit, dev-&gt;ffbit, FF_MAX) ||</span><br><span class="line">        !bitmap_subset(id-&gt;swbit, dev-&gt;swbit, SW_MAX) ||</span><br><span class="line">        !bitmap_subset(id-&gt;propbit, dev-&gt;propbit, INPUT_PROP_MAX)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line">EXPORT_SYMBOL(input_match_device_id);</span><br></pre></td></tr></table></figure>
+<h4 id="4-input-register-device"><a href="#4-input-register-device" class="headerlink" title="4) input_register_device"></a>4) input_register_device</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">input_register_device</span><span class="params">(struct input_dev *dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_devres</span> *<span class="title">devres</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_handler</span> *<span class="title">handler</span>;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> packet_size;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *path;</span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 测试是否设置了 EV_ABS ，如果设置的同时  dev-&gt;absinfo 为空则返回</span></span><br><span class="line">    <span class="keyword">if</span> (test_bit(EV_ABS, dev-&gt;evbit) &amp;&amp; !dev-&gt;absinfo) &#123;</span><br><span class="line">        dev_err(&amp;dev-&gt;dev,</span><br><span class="line">            <span class="string">&quot;Absolute device without dev-&gt;absinfo, refusing to register\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> -EINVAL;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 是否使用设备资源管理，</span></span><br><span class="line">    <span class="comment">// 驱动注册失败时自动调用 devm_input_device_unregister 函数释放资源</span></span><br><span class="line">    <span class="keyword">if</span> (dev-&gt;devres_managed) &#123; </span><br><span class="line">        devres = devres_alloc(devm_input_device_unregister,</span><br><span class="line">                      <span class="keyword">sizeof</span>(*devres), GFP_KERNEL);</span><br><span class="line">        <span class="keyword">if</span> (!devres)</span><br><span class="line">            <span class="keyword">return</span> -ENOMEM;</span><br><span class="line"></span><br><span class="line">        devres-&gt;input = dev;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 每一个设备都支持 EV_SYN/SYN_REPORT 事件</span></span><br><span class="line">    __set_bit(EV_SYN, dev-&gt;evbit);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// KEY_RESERVED 事件不应该被传输到应用空间</span></span><br><span class="line">    __clear_bit(KEY_RESERVED, dev-&gt;keybit);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清空其他事件，也就是说在 input_dev 注册前设置的其他事件是没有意义的会被清空</span></span><br><span class="line">    input_cleanse_bitmasks(dev);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取每个包多少个事件</span></span><br><span class="line">    packet_size = input_estimate_events_per_packet(dev);</span><br><span class="line">    <span class="keyword">if</span> (dev-&gt;hint_events_per_packet &lt; packet_size)</span><br><span class="line">        dev-&gt;hint_events_per_packet = packet_size;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算出每个包最大的事件数</span></span><br><span class="line">    dev-&gt;max_vals = dev-&gt;hint_events_per_packet + <span class="number">2</span>;</span><br><span class="line">    <span class="comment">// 动态分出需要的内存空间</span></span><br><span class="line">    dev-&gt;vals = kcalloc(dev-&gt;max_vals, <span class="keyword">sizeof</span>(*dev-&gt;vals), GFP_KERNEL);</span><br><span class="line">    <span class="keyword">if</span> (!dev-&gt;vals) &#123;</span><br><span class="line">        error = -ENOMEM;</span><br><span class="line">        <span class="keyword">goto</span> err_devres_free;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重复按键相关</span></span><br><span class="line">    <span class="comment">// REP_PERIOD 秒之后每个 REP_DELAY 秒检测一次按键是否被按下。</span></span><br><span class="line">    <span class="keyword">if</span> (!dev-&gt;rep[REP_DELAY] &amp;&amp; !dev-&gt;rep[REP_PERIOD])</span><br><span class="line">        input_enable_softrepeat(dev, <span class="number">250</span>, <span class="number">33</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!dev-&gt;getkeycode)</span><br><span class="line">        dev-&gt;getkeycode = input_default_getkeycode;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!dev-&gt;setkeycode)</span><br><span class="line">        dev-&gt;setkeycode = input_default_setkeycode;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 注册设备创建出设备节点 /sys/devices/xxx</span></span><br><span class="line">    error = device_add(&amp;dev-&gt;dev);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">goto</span> err_free_vals;</span><br><span class="line">     </span><br><span class="line">    <span class="comment">//打印设备所在路径</span></span><br><span class="line">    path = kobject_get_path(&amp;dev-&gt;dev.kobj, GFP_KERNEL);</span><br><span class="line">    pr_info(<span class="string">&quot;%s as %s\n&quot;</span>,</span><br><span class="line">        dev-&gt;name ? dev-&gt;name : <span class="string">&quot;Unspecified device&quot;</span>,</span><br><span class="line">        path ? path : <span class="string">&quot;N/A&quot;</span>);</span><br><span class="line">    kfree(path);</span><br><span class="line"></span><br><span class="line">    error = mutex_lock_interruptible(&amp;input_mutex);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">goto</span> err_device_del;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将 input_dev 链接到 input_dev_list</span></span><br><span class="line">    list_add_tail(&amp;dev-&gt;node, &amp;input_dev_list);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//对于 input_handler_list 上的每一个 handler 调用 input_attach_handler 进行匹配</span></span><br><span class="line">    list_for_each_entry(handler, &amp;input_handler_list, node)</span><br><span class="line">        input_attach_handler(dev, handler); </span><br><span class="line"></span><br><span class="line">    input_wakeup_procfs_readers();</span><br><span class="line"></span><br><span class="line">    mutex_unlock(&amp;input_mutex);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (dev-&gt;devres_managed) &#123; <span class="comment">// 如果设置了设备资源管理则注册对应</span></span><br><span class="line">        dev_dbg(dev-&gt;dev.parent, <span class="string">&quot;%s: registering %s with devres.\n&quot;</span>,</span><br><span class="line">            __func__, dev_name(&amp;dev-&gt;dev));</span><br><span class="line">        devres_add(dev-&gt;dev.parent, devres);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">err_device_del:</span><br><span class="line">    device_del(&amp;dev-&gt;dev);</span><br><span class="line">err_free_vals:</span><br><span class="line">    kfree(dev-&gt;vals);</span><br><span class="line">    dev-&gt;vals = <span class="literal">NULL</span>;</span><br><span class="line">err_devres_free:</span><br><span class="line">    devres_free(devres);</span><br><span class="line">    <span class="keyword">return</span> error;</span><br><span class="line">&#125;</span><br><span class="line">EXPORT_SYMBOL(input_register_device);</span><br></pre></td></tr></table></figure>
+<h4 id="5-input-register-handle"><a href="#5-input-register-handle" class="headerlink" title="5) input_register_handle"></a>5) input_register_handle</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">input_register_handle</span><span class="params">(struct input_handle *handle)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_handler</span> *<span class="title">handler</span> =</span> handle-&gt;handler;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_dev</span> *<span class="title">dev</span> =</span> handle-&gt;dev;</span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line"></span><br><span class="line">    error = mutex_lock_interruptible(&amp;dev-&gt;mutex);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">return</span> error;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (handler-&gt;filter) <span class="comment">//将 d_node 节点连接到 dev-&gt;h_list</span></span><br><span class="line">        list_add_rcu(&amp;handle-&gt;d_node, &amp;dev-&gt;h_list);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        list_add_tail_rcu(&amp;handle-&gt;d_node, &amp;dev-&gt;h_list);</span><br><span class="line"></span><br><span class="line">    mutex_unlock(&amp;dev-&gt;mutex);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将 handle-&gt;h_node 链接到 handler-&gt;h_list</span></span><br><span class="line">    list_add_tail_rcu(&amp;handle-&gt;h_node, &amp;handler-&gt;h_list);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (handler-&gt;start)</span><br><span class="line">        handler-&gt;start(handle);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line">EXPORT_SYMBOL(input_register_handle);</span><br></pre></td></tr></table></figure>
+<h2 id="三、evdev-分析"><a href="#三、evdev-分析" class="headerlink" title="三、evdev 分析"></a>三、evdev 分析</h2><p>常用的 input_handler 内核都已经为我们做好了，这里来分析最最常用的 evdev。</p>
+<h3 id="1、数据结构"><a href="#1、数据结构" class="headerlink" title="1、数据结构"></a>1、数据结构</h3><h4 id="1-evdev"><a href="#1-evdev" class="headerlink" title="1) evdev"></a>1) evdev</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">evdev</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> open; / 对被打开的设备进行计数</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_handle</span> <span class="title">handle</span>;</span>  <span class="comment">// handle 被嵌入到 evdev，用于建立 input_dev 和 input_handler 之间的链接</span></span><br><span class="line">    <span class="keyword">wait_queue_head_t</span> wait; <span class="comment">//等待队列头</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">evdev_client</span> __<span class="title">rcu</span> *<span class="title">grab</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">client_list</span>;</span> <span class="comment">//连接 client</span></span><br><span class="line">    <span class="keyword">spinlock_t</span> client_lock; <span class="comment">/* protects client_list */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mutex</span> <span class="title">mutex</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">device</span> <span class="title">dev</span>;</span> <span class="comment">// 设备</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">cdev</span> <span class="title">cdev</span>;</span>  <span class="comment">// 字符设备结构</span></span><br><span class="line">    <span class="keyword">bool</span> exist;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="2）evdev-client"><a href="#2）evdev-client" class="headerlink" title="2）evdev_client"></a>2）evdev_client</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">evdev_client</span> &#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> head;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> tail;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> packet_head; <span class="comment">/* [future] position of the first element of next packet */</span></span><br><span class="line">    <span class="keyword">spinlock_t</span> buffer_lock; <span class="comment">/* protects access to buffer, head and tail */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">fasync_struct</span> *<span class="title">fasync</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">evdev</span> *<span class="title">evdev</span>;</span> <span class="comment">// 指向所属的 evdev</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">node</span>;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> clk_type;</span><br><span class="line">    <span class="keyword">bool</span> revoked;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> *evmasks[EV_CNT];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> bufsize; <span class="comment">// 数据大小</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">buffer</span>[];</span> <span class="comment">// 需要上报的数据存储在这里，这是一个环形数组缓存</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="2、evdev-的注册"><a href="#2、evdev-的注册" class="headerlink" title="2、evdev 的注册"></a>2、evdev 的注册</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">input_device_id</span> <span class="title">evdev_ids</span>[] =</span> &#123;</span><br><span class="line">    &#123; .driver_info = <span class="number">1</span> &#125;,   <span class="comment">/* 对所有的设备进行匹配 */</span></span><br><span class="line">    &#123; &#125;,                    <span class="comment">/* 其他项为 0 则支持所有的事件 */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MODULE_DEVICE_TABLE(input, evdev_ids);</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">input_handler</span> <span class="title">evdev_handler</span> =</span> &#123;</span><br><span class="line">    .event      = evdev_event,       <span class="comment">// 事件处理回调接口</span></span><br><span class="line">    .events     = evdev_events,      </span><br><span class="line">    .connect    = evdev_connect,     <span class="comment">// 当有 input_dev 匹配成功时调用，建立连接</span></span><br><span class="line">    .disconnect = evdev_disconnect,  <span class="comment">// 断开连接</span></span><br><span class="line">    .legacy_minors  = <span class="literal">true</span>,           </span><br><span class="line">    .minor      = EVDEV_MINOR_BASE,  <span class="comment">// 次设备号的基地址 64</span></span><br><span class="line">    .name       = <span class="string">&quot;evdev&quot;</span>,           <span class="comment">// handler 名字</span></span><br><span class="line">    .id_table   = evdev_ids,         <span class="comment">// id_table 用于 input_dev 的匹配</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> __init <span class="title">evdev_init</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> input_register_handler(&amp;evdev_handler);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3、与设备建立连接"><a href="#3、与设备建立连接" class="headerlink" title="3、与设备建立连接"></a>3、与设备建立连接</h3><p>当有设备匹配成功时,直接调用 evdev_connect 函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">evdev_connect</span><span class="params">(struct input_handler *handler, struct input_dev *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">             <span class="keyword">const</span> struct input_device_id *id)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">evdev</span> *<span class="title">evdev</span>;</span></span><br><span class="line">    <span class="keyword">int</span> minor;</span><br><span class="line">    <span class="keyword">int</span> dev_no;</span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取次设备号</span></span><br><span class="line">    minor = input_get_new_minor(EVDEV_MINOR_BASE, EVDEV_MINORS, <span class="literal">true</span>);</span><br><span class="line">    <span class="keyword">if</span> (minor &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        error = minor;</span><br><span class="line">        pr_err(<span class="string">&quot;failed to reserve new minor: %d\n&quot;</span>, error);</span><br><span class="line">        <span class="keyword">return</span> error;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建一个 evdev</span></span><br><span class="line">    evdev = kzalloc(<span class="keyword">sizeof</span>(struct evdev), GFP_KERNEL);</span><br><span class="line">    <span class="keyword">if</span> (!evdev) &#123;</span><br><span class="line">        error = -ENOMEM;</span><br><span class="line">        <span class="keyword">goto</span> err_free_minor;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化链表</span></span><br><span class="line">    INIT_LIST_HEAD(&amp;evdev-&gt;client_list);</span><br><span class="line">    spin_lock_init(&amp;evdev-&gt;client_lock);</span><br><span class="line">    mutex_init(&amp;evdev-&gt;mutex);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//初始化等待队列头</span></span><br><span class="line">    init_waitqueue_head(&amp;evdev-&gt;wait);</span><br><span class="line">    evdev-&gt;exist = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    dev_no = minor;</span><br><span class="line">    <span class="comment">/* Normalize device number if it falls into legacy range */</span></span><br><span class="line">    <span class="keyword">if</span> (dev_no &lt; EVDEV_MINOR_BASE + EVDEV_MINORS)</span><br><span class="line">        dev_no -= EVDEV_MINOR_BASE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置设备名字为 event + 次设备号</span></span><br><span class="line">    dev_set_name(&amp;evdev-&gt;dev, <span class="string">&quot;event%d&quot;</span>, dev_no);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置 handle 结构的 dev 为传入的 input_dev, 同时增加相关设备的引用计数</span></span><br><span class="line">    evdev-&gt;handle.dev = input_get_device(dev);</span><br><span class="line">    evdev-&gt;handle.name = dev_name(&amp;evdev-&gt;dev);  <span class="comment">// 设置 name 为 evdev</span></span><br><span class="line">    evdev-&gt;handle.handler = handler;             <span class="comment">// 设置 handler</span></span><br><span class="line">    evdev-&gt;handle.<span class="keyword">private</span> = evdev;               <span class="comment">// 设置私有数据</span></span><br><span class="line"></span><br><span class="line">    evdev-&gt;dev.devt = MKDEV(INPUT_MAJOR, minor); <span class="comment">// 设置设备号</span></span><br><span class="line">    evdev-&gt;dev.class = &amp;input_class; <span class="comment">// 设置所属类 /sys/class/input</span></span><br><span class="line">    evdev-&gt;dev.parent = &amp;dev-&gt;dev;   <span class="comment">// 设置父节点为 input_dev-&gt;dev</span></span><br><span class="line">    evdev-&gt;dev.release = evdev_free; <span class="comment">// 设置 release 回调函数</span></span><br><span class="line">    device_initialize(&amp;evdev-&gt;dev);  <span class="comment">// 初始化设备结构</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 注册 handle 结构，就是将对应节点链接到对应的 input_dev 和 input_handler</span></span><br><span class="line">    error = input_register_handle(&amp;evdev-&gt;handle);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">goto</span> err_free_evdev;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化字符设备，evdev 的本质就是字符设备</span></span><br><span class="line">    cdev_init(&amp;evdev-&gt;cdev, &amp;evdev_fops);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 注册字符设备，同时也会在 /dev 下创建出对应的设备 dev/intput0</span></span><br><span class="line">    <span class="comment">// 创建 /sys/class/input/input0</span></span><br><span class="line">    <span class="comment">// 创建 /sys/devices/注册的设备名/input0</span></span><br><span class="line">    error = cdev_device_add(&amp;evdev-&gt;cdev, &amp;evdev-&gt;dev);</span><br><span class="line">    <span class="keyword">if</span> (error)</span><br><span class="line">        <span class="keyword">goto</span> err_cleanup_evdev;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"> err_cleanup_evdev:</span><br><span class="line">    evdev_cleanup(evdev);</span><br><span class="line">    input_unregister_handle(&amp;evdev-&gt;handle);</span><br><span class="line"> err_free_evdev:</span><br><span class="line">    put_device(&amp;evdev-&gt;dev);</span><br><span class="line"> err_free_minor:</span><br><span class="line">    input_free_minor(minor);</span><br><span class="line">    <span class="keyword">return</span> error;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在建立连接时将创建字符设备，提供的接口如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">evdev_fops</span> =</span> &#123;</span><br><span class="line">    .owner      = THIS_MODULE,</span><br><span class="line">    .read       = evdev_read,</span><br><span class="line">    .write      = evdev_write,</span><br><span class="line">    .poll       = evdev_poll,</span><br><span class="line">    .open       = evdev_open,</span><br><span class="line">    .release    = evdev_release,</span><br><span class="line">    .unlocked_ioctl = evdev_ioctl,</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_COMPAT</span></span><br><span class="line">    .compat_ioctl   = evdev_ioctl_compat,</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    .fasync     = evdev_fasync,</span><br><span class="line">    .llseek     = no_llseek,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="4、打开设备"><a href="#4、打开设备" class="headerlink" title="4、打开设备"></a>4、打开设备</h3><p>当上层打开对应的字符设备接口时回调流程如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> evdev_open</span><br><span class="line">    --&gt; <span class="keyword">static</span> <span class="keyword">int</span> evdev_open_device</span><br><span class="line">        --&gt; <span class="keyword">int</span> input_open_device</span><br><span class="line">            --&gt; dev-&gt;open(dev); <span class="comment">//如果存在则调用，不存在直接返回</span></span><br></pre></td></tr></table></figure>
+<p>当我们打开一个 evdev 节点的时候最终会调用对应的设备的 open 回调函数</p>
+<h3 id="5、读取数据"><a href="#5、读取数据" class="headerlink" title="5、读取数据"></a>5、读取数据</h3><p>当 以 O_NONBLOCK 读取数据时，读取不到数据进入休眠。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">ssize_t</span> <span class="title">evdev_read</span><span class="params">(struct file *file, <span class="keyword">char</span> __user *buffer,</span></span></span><br><span class="line"><span class="function"><span class="params">              <span class="keyword">size_t</span> count, <span class="keyword">loff_t</span> *ppos)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">evdev_client</span> *<span class="title">client</span> =</span> file-&gt;private_data;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">evdev</span> *<span class="title">evdev</span> =</span> client-&gt;evdev;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">input_event</span> <span class="title">event</span>;</span></span><br><span class="line">    <span class="keyword">size_t</span> read = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> error;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 判读读取的数据是否过长</span></span><br><span class="line">    <span class="keyword">if</span> (count != <span class="number">0</span> &amp;&amp; count &lt; input_event_size())</span><br><span class="line">        <span class="keyword">return</span> -EINVAL;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!evdev-&gt;exist || client-&gt;revoked)</span><br><span class="line">            <span class="keyword">return</span> -ENODEV;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (client-&gt;packet_head == client-&gt;tail &amp;&amp;</span><br><span class="line">            (file-&gt;f_flags &amp; O_NONBLOCK))</span><br><span class="line">            <span class="keyword">return</span> -EAGAIN;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 读取的长度为 0 直接返回</span></span><br><span class="line">        <span class="keyword">if</span> (count == <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (read + input_event_size() &lt;= count &amp;&amp;</span><br><span class="line">               evdev_fetch_next_event(client, &amp;event)) &#123;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (input_event_to_user(buffer + read, &amp;event))</span><br><span class="line">                <span class="keyword">return</span> -EFAULT;</span><br><span class="line"></span><br><span class="line">            read += input_event_size();</span><br><span class="line">        &#125; <span class="comment">// 循环读取数据</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (read) <span class="comment">// 读取到则返回</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果未读取到数据同时状态是 O_NONBLOCK 则进入休眠。</span></span><br><span class="line">        <span class="keyword">if</span> (!(file-&gt;f_flags &amp; O_NONBLOCK)) &#123; </span><br><span class="line">            error = wait_event_interruptible(evdev-&gt;wait,</span><br><span class="line">                    client-&gt;packet_head != client-&gt;tail ||</span><br><span class="line">                    !evdev-&gt;exist || client-&gt;revoked);</span><br><span class="line">            <span class="keyword">if</span> (error)</span><br><span class="line">                <span class="keyword">return</span> error;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> read;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="四、事件上报"><a href="#四、事件上报" class="headerlink" title="四、事件上报"></a>四、事件上报</h2><p>所谓事件上报，不过是将要上报的事件准备好，然后唤醒前面 evdev_read 休眠的进程，将数据返回给用户空间。调用流程如下感兴趣可以跟一下源码。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> input_event</span><br><span class="line">    --&gt; <span class="keyword">static</span> <span class="keyword">void</span> input_handle_event</span><br><span class="line">        --&gt; <span class="keyword">static</span> <span class="keyword">void</span> input_pass_values</span><br><span class="line">            --&gt; <span class="keyword">static</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> input_to_handler</span><br><span class="line">                 --&gt; handler-&gt;event</span><br><span class="line">                     --&gt; <span class="keyword">static</span> <span class="keyword">void</span> evdev_event</span><br><span class="line">                             --&gt; <span class="keyword">static</span> <span class="keyword">void</span> evdev_events</span><br><span class="line">                                 --&gt; <span class="keyword">static</span> <span class="keyword">void</span> evdev_pass_values</span><br><span class="line">                                     --&gt; wake_up_interruptible(&amp;evdev-&gt;wait);</span><br></pre></td></tr></table></figure>
+<p>内核已经将上报的接口封装好了，如下所示。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 向输入子系统报告产生的按键事件类型的事件code，以及事件的值value</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_report_key</span><span class="params">(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_KEY, code, !!value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 向输入子系统报告相对坐标事件</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_report_rel</span><span class="params">(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_REL, code, value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 向输入子系统报告绝对坐标事件</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_report_abs</span><span class="params">(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_ABS, code, value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 耳机插拔等事件上报</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_report_switch</span><span class="params">(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> code, <span class="keyword">int</span> value)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_SW, code, !!value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 通知子系统处理上报的事件</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_sync</span><span class="params">(struct input_dev *dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_SYN, SYN_REPORT, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 多点触摸事件 </span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">input_mt_sync</span><span class="params">(struct input_dev *dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    input_event(dev, EV_SYN, SYN_MT_REPORT, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置 type 事件的事件值</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">input_set_capability</span><span class="params">(struct input_dev *dev, <span class="keyword">unsigned</span> <span class="keyword">int</span> type, <span class="keyword">unsigned</span> <span class="keyword">int</span> code)</span></span>;</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>braon-z
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://example.com/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/" title="linux驱动-input子系统">https://example.com/2021/05/06/linux驱动-input子系统重构/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/input/" rel="tag"><i class="fa fa-tag"></i> input</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/01/18/makfile%E4%B8%93%E9%A2%98/" rel="prev" title="makefile专题">
+                  <i class="fa fa-chevron-left"></i> makefile专题
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/06/11/linux%E9%A9%B1%E5%8A%A8-pinctrl/" rel="next" title="pinctrl 子系统">
+                  pinctrl 子系统 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">braon-z</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">377k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:43</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script>
+NexT.utils.loadComments('#valine-comments', () => {
+  NexT.utils.getScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', () => {
+    new Valine(Object.assign({"enable":true,"appId":"VsC1eQwQ4Xltm5eA9iYGp3VU-gzGzoHsz","appKey":"kyfyE4RWl6aIojedbxcuJa3V","serverURLs":null,"placeholder":"Just go go","avatar":"mm","meta":["nick","mail","link"],"pageSize":10,"lang":null,"visitor":false,"comment_count":true,"recordIP":false,"enableQQ":false,"requiredFields":[]}, {
+      el: '#valine-comments',
+      path: "/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/",
+      serverURLs: "https://vsc1eqwq.api.lncldglobal.com"
+    }));
+  }, window.Valine);
+});
+</script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+<div class="moon-menu">
+  <div class="moon-menu-items">
+    
+    <div class="moon-menu-item" onclick="back2bottom()">
+      <i class='fa fa-chevron-down'></i>    </div>
+    
+    <div class="moon-menu-item" onclick="back2top()">
+      <i class='fa fa-chevron-up'></i>    </div>
+    
+  </div>
+  <div class="moon-menu-button">
+    <svg class="moon-menu-bg">
+      <circle class="moon-menu-cricle" cx="50%" cy="50%" r="44%"></circle>
+      <circle class="moon-menu-border" cx="50%" cy="50%" r="48%"></circle>
+    </svg>
+    <div class="moon-menu-content">
+      <div class="moon-menu-icon"><i class='fas fa-ellipsis-v'></i></div>
+      <div class="moon-menu-text"></div>
+    </div>
+  </div>
+</div><script src="/js/injector.js"></script>
+</body>
+</html>
