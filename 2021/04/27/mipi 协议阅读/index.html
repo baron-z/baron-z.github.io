@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":"ture","mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; 阅读 MIPI Alliance Standard for Display Serial Interface V1.0 不照搬全文，有部分个人理解，可能会有内容删减。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="番外篇-mipi dsi 协议">
+<meta property="og:url" content="https://example.com/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/index.html">
+<meta property="og:site_name" content="braon-z&#39;s blog">
+<meta property="og:description" content="&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; 阅读 MIPI Alliance Standard for Display Serial Interface V1.0 不照搬全文，有部分个人理解，可能会有内容删减。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/linux-lcd%E9%A9%B1%E5%8A%A8/phy.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627537718;10267451318&q-key-time=1627537718;10267451318&q-header-list=&q-url-param-list=&q-signature=89144ae577f1caef44f403c264e871f3a1cad840">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/linux-lcd%E9%A9%B1%E5%8A%A8/mipi%20dsi%20%E5%88%86%E5%B1%82.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627540599;10267454199&q-key-time=1627540599;10267454199&q-header-list=&q-url-param-list=&q-signature=d3f218ebfbb9e9a5f599fd2b2c9db5f499c745a9">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%203%20Basic%20HS%20Transmission%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627900224;10267813824&q-key-time=1627900224;10267813824&q-header-list=&q-url-param-list=&q-signature=dd85b03ed2114936af5cf10dbd1907ca3c04f2b1">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%204%20Lane%20Distributor%20Conceptual%20Overview.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627956464;10267870064&q-key-time=1627956464;10267870064&q-header-list=&q-url-param-list=&q-signature=639b8d645102c8ad7b58aed023837eb21849d2ed">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%205%20Lane%20Merger%20Conceptual%20Overview.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627956670;10267870270&q-key-time=1627956670;10267870270&q-header-list=&q-url-param-list=&q-signature=46261455356456e4a9b2615e784f4f8a1ccb0980">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%206%20Four-Lane%20Transmitter%20with%20Two-Lane%20Receiver%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627957336;10267870936&q-key-time=1627957336;10267870936&q-header-list=&q-url-param-list=&q-signature=ed399f4fe3e72b78252bda15adbc3bdb470f5f47">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%207%20Two%20Lane%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627958691;10267872291&q-key-time=1627958691;10267872291&q-header-list=&q-url-param-list=&q-signature=de8ea11cf706162c17ada819b47f06045bd5742a">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%208%20Three%20Lane%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627958828;10267872428&q-key-time=1627958828;10267872428&q-header-list=&q-url-param-list=&q-signature=fbac701716e9a294782b808a0554510b60805b09">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%209%20Multiple%20Packet%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628059834;10267973434&q-key-time=1628059834;10267973434&q-header-list=&q-url-param-list=&q-signature=6f7ce3df7a2acb448d2c16d5f407c5849438f0fc">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2010%20Long%20Packet%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063036;10267976636&q-key-time=1628063036;10267976636&q-header-list=&q-url-param-list=&q-signature=b15a0ae687429b35488b06b2880bf4f4244baa06">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2011%20Short%20packet%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063105;10267976705&q-key-time=1628063105;10267976705&q-header-list=&q-url-param-list=&q-signature=8f06749371745d54498d2996a689923d0244cd09">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2012%20Data%20Identifier%20Byte.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063360;10267976960&q-key-time=1628063360;10267976960&q-header-list=&q-url-param-list=&q-signature=6f96cb13042d5866d5b38af127cf41f864ce34a8">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2013%20Interleaved%20Data%20Stream%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628064032;10267977632&q-key-time=1628064032;10267977632&q-header-list=&q-url-param-list=&q-signature=1efe21a07a5ab974951db520fcec3f9076f7d636">
+<meta property="og:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2014%20Logical%20Channel%20Block%20Diagram%20%28Receiver%20Case%29.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628064215;10267977815&q-key-time=1628064215;10267977815&q-header-list=&q-url-param-list=&q-signature=1cf0da05d9274f169f9c0415c4ce1accf82aa88c">
+<meta property="article:published_time" content="2021-04-27T01:14:17.000Z">
+<meta property="article:modified_time" content="2021-08-05T07:26:42.583Z">
+<meta property="article:author" content="braon-z">
+<meta property="article:tag" content="lcm - mipi">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/linux-lcd%E9%A9%B1%E5%8A%A8/phy.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627537718;10267451318&q-key-time=1627537718;10267451318&q-header-list=&q-url-param-list=&q-signature=89144ae577f1caef44f403c264e871f3a1cad840">
+
+
+<link rel="canonical" href="https://example.com/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>番外篇-mipi dsi 协议 | braon-z's blog</title>
+  
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">braon-z's blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-commonweal"><a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81MIPI%E8%81%94%E7%9B%9F%E6%98%BE%E7%A4%BA%E7%B3%BB%E5%88%97%E6%8E%A5%E5%8F%A3%E7%9A%84%E6%A0%87%E5%87%86"><span class="nav-text">一、MIPI联盟显示系列接口的标准</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1%E3%80%81%E7%9B%B8%E5%85%B3%E6%9C%AF%E8%AF%AD"><span class="nav-text">1、相关术语</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%AE%9A%E4%B9%89"><span class="nav-text">1) 定义</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81DSI-Introduction"><span class="nav-text">二、DSI Introduction</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81DSI-Layer-Definitions"><span class="nav-text">1、DSI Layer Definitions</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1%EF%BC%89PHY-Layer"><span class="nav-text">1）PHY Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2%EF%BC%89Lane-Management-Layer"><span class="nav-text">2）Lane Management Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-Protocol-Layer"><span class="nav-text">3) Protocol Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-Application-Layer"><span class="nav-text">4) Application Layer</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Command-and-Video-Modes"><span class="nav-text">2、Command and Video Modes</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Command-Mode"><span class="nav-text">1) Command Mode</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Video-Mode-Operation"><span class="nav-text">2) Video Mode Operation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-Virtual-Channel-Capability"><span class="nav-text">3) Virtual Channel Capability</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81DSI-Physical-Layer"><span class="nav-text">三、DSI Physical Layer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Data-Flow-Control"><span class="nav-text">1、Data Flow Control</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Bidirectionality-and-Low-Power-Signaling-Policy"><span class="nav-text">2、Bidirectionality and Low Power Signaling Policy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81Command-Mode-Interfaces"><span class="nav-text">3、Command Mode Interfaces</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81Video-Mode-Interfaces"><span class="nav-text">4、Video Mode Interfaces</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#5%E3%80%81Bidirectional-Control-Mechanism"><span class="nav-text">5、Bidirectional Control Mechanism</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6%E3%80%81Clock-Management"><span class="nav-text">6、Clock Management</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7%E3%80%81Clock-Requirements"><span class="nav-text">7、Clock Requirements</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8%E3%80%81Clock-Power-and-Timing"><span class="nav-text">8、Clock Power and Timing</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Multi-Lane-Distribution-and-Merging"><span class="nav-text">四、Multi-Lane Distribution and Merging</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Multi-Lane-Interoperability-and-Lane-number-Mismatch"><span class="nav-text">1、Multi-Lane Interoperability and Lane-number Mismatch</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Clock-Considerations-with-Multi-Lane"><span class="nav-text">1) Clock Considerations with Multi-Lane</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Bi-directionality-and-Multi-Lane-Capability"><span class="nav-text">2) Bi-directionality and Multi-Lane Capability</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-SoT-and-EoT-in-Multi-Lane-Configurations"><span class="nav-text">3) SoT and EoT in Multi-Lane Configurations</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81DSI-Protocol"><span class="nav-text">五、DSI Protocol</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Multiple-Packets-per-Transmission"><span class="nav-text">1、Multiple Packets per Transmission</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Packet-Composition"><span class="nav-text">2、Packet Composition</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81Endian-Policy"><span class="nav-text">3、Endian Policy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%E3%80%81General-Packet-Structure"><span class="nav-text">4、General Packet Structure</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Long-Packet-Format"><span class="nav-text">1) Long Packet Format</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Short-Packet-Format"><span class="nav-text">2) Short Packet Format</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5%E3%80%81Common-Packet-Elements"><span class="nav-text">5、Common Packet Elements</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Data-Identifier-Byte"><span class="nav-text">1) Data Identifier Byte</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Error-Correction-Code"><span class="nav-text">2) Error Correction Code</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6%E3%80%81Interleaved-Data-Streams"><span class="nav-text">6、Interleaved Data Streams</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Interleaved-Data-Streams-and-Bi-directionality"><span class="nav-text">1) Interleaved Data Streams and Bi-directionality</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7%E3%80%81Processor-to-Peripheral-Direction-Processor-Sourced-Packet-Data-Types"><span class="nav-text">7、Processor to Peripheral Direction (Processor-Sourced) Packet Data Types</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8%E3%80%81Processor-to-Peripheral-Transactions-%E2%80%93-Detailed-Format-Description"><span class="nav-text">8、Processor-to-Peripheral Transactions – Detailed Format Description</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-Sync-Event-H-Start-H-End-V-Start-V-End-Data-Type-xx-0001-x1h"><span class="nav-text">1) Sync Event (H Start, H End, V Start, V End), Data Type &#x3D; xx 0001 (x1h)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-Color-Mode-On-Command-Data-Type-00-0010-02h"><span class="nav-text">2) Color Mode On Command, Data Type &#x3D; 00 0010 (02h)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-Color-Mode-Off-Command-Data-Type-01-0010-12h"><span class="nav-text">3) Color Mode Off Command, Data Type &#x3D; 01 0010 (12h)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-Shutdown-Peripheral-Command-Data-Type-10-0010-22h"><span class="nav-text">4) Shutdown Peripheral Command, Data Type &#x3D; 10 0010 (22h)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-Turn-On-Peripheral-Command-Data-Type-11-0010-32h"><span class="nav-text">5) Turn On Peripheral Command, Data Type &#x3D; 11 0010 (32h)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-Generic-Short-WRITE-Packet-0-to-7-Parameters-Data-Type-xx-x011-x3h-and-xBh"><span class="nav-text">6) Generic Short WRITE Packet, 0 to 7 Parameters, Data Type &#x3D; xx x011 (x3h and xBh)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-Generic-READ-Request-0-to-7-Parameters-Data-Type-xx-x100-x4h-and-xCh"><span class="nav-text">7) Generic READ Request, 0 to 7 Parameters, Data Type &#x3D; xx x100 (x4h and xCh)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11-Video-Mode-Interface-Timing"><span class="nav-text">11) Video Mode Interface Timing</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="braon-z"
+      src="/images/wallhaven.jfif">
+  <p class="site-author-name" itemprop="name">braon-z</p>
+  <div class="site-description" itemprop="description"> 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:yourname@gmail.com" title="E-Mail → mailto:yourname@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+<div style="">
+  <canvas id="canvas" style="width:60%;">当前浏览器不支持canvas，请更换浏览器后再试</canvas>
+</div>
+<script>
+(function(){
+
+   var digit=
+    [
+        [
+            [0,0,1,1,1,0,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,0,1,1,0],
+            [0,0,1,1,1,0,0]
+        ],//0
+        [
+            [0,0,0,1,1,0,0],
+            [0,1,1,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [1,1,1,1,1,1,1]
+        ],//1
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,1,1],
+            [1,1,1,1,1,1,1]
+        ],//2
+        [
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//3
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,0],
+            [0,0,1,1,1,1,0],
+            [0,1,1,0,1,1,0],
+            [1,1,0,0,1,1,0],
+            [1,1,1,1,1,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,1,1]
+        ],//4
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,1,1,1,1,0],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//5
+        [
+            [0,0,0,0,1,1,0],
+            [0,0,1,1,0,0,0],
+            [0,1,1,0,0,0,0],
+            [1,1,0,0,0,0,0],
+            [1,1,0,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//6
+        [
+            [1,1,1,1,1,1,1],
+            [1,1,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,0,0,1,1,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0],
+            [0,0,1,1,0,0,0]
+        ],//7
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,1,1,0]
+        ],//8
+        [
+            [0,1,1,1,1,1,0],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [1,1,0,0,0,1,1],
+            [0,1,1,1,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,0,1,1],
+            [0,0,0,0,1,1,0],
+            [0,0,0,1,1,0,0],
+            [0,1,1,0,0,0,0]
+        ],//9
+        [
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,1,1,1,0,0],
+            [0,0,0,0,0,0,0]
+        ]//:
+    ];
+
+var canvas = document.getElementById('canvas');
+
+if(canvas.getContext){
+    var cxt = canvas.getContext('2d');
+    //声明canvas的宽高
+    var H = 100,W = 700;
+    canvas.height = H;
+    canvas.width = W;
+    cxt.fillStyle = '#f00';
+    cxt.fillRect(10,10,50,50);
+
+    //存储时间数据
+    var data = [];
+    //存储运动的小球
+    var balls = [];
+    //设置粒子半径
+    var R = canvas.height/20-1;
+    (function(){
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        //存储时间数字，由十位小时、个位小时、冒号、十位分钟、个位分钟、冒号、十位秒钟、个位秒钟这7个数字组成
+        data.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+    })();
+
+    /*生成点阵数字*/
+    function renderDigit(index,num){
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    cxt.beginPath();
+                    cxt.arc(14*(R+2)*index + j*2*(R+1)+(R+1),i*2*(R+1)+(R+1),R,0,2*Math.PI);
+                    cxt.closePath();
+                    cxt.fill();
+                }
+            }
+        }
+    }
+
+    /*更新时钟*/
+    function updateDigitTime(){
+        var changeNumArray = [];
+        var temp = /(\d)(\d):(\d)(\d):(\d)(\d)/.exec(new Date());
+        var NewData = [];
+        NewData.push(temp[1],temp[2],10,temp[3],temp[4],10,temp[5],temp[6]);
+        for(var i = data.length-1; i >=0 ; i--){
+            //时间发生变化
+            if(NewData[i] !== data[i]){
+                //将变化的数字值和在data数组中的索引存储在changeNumArray数组中
+                changeNumArray.push(i+'_'+(Number(data[i])+1)%10);
+            }
+        }
+        //增加小球
+        for(var i = 0; i< changeNumArray.length; i++){
+            addBalls.apply(this,changeNumArray[i].split('_'));
+        }
+        data = NewData.concat();
+    }
+
+    /*更新小球状态*/
+    function updateBalls(){
+        for(var i = 0; i < balls.length; i++){
+            balls[i].stepY += balls[i].disY;
+            balls[i].x += balls[i].stepX;
+            balls[i].y += balls[i].stepY;
+            if(balls[i].x > W + R || balls[i].y > H + R){
+                balls.splice(i,1);
+                i--;
+            }
+        }
+    }
+
+    /*增加要运动的小球*/
+    function addBalls(index,num){
+        var numArray = [1,2,3];
+        var colorArray =  ["#3BE","#09C","#A6C","#93C","#9C0","#690","#FB3","#F80","#F44","#C00"];
+        for(var i = 0; i < digit[num].length; i++){
+            for(var j = 0; j < digit[num][i].length; j++){
+                if(digit[num][i][j] == 1){
+                    var ball = {
+                        x:14*(R+2)*index + j*2*(R+1)+(R+1),
+                        y:i*2*(R+1)+(R+1),
+                        stepX:Math.floor(Math.random() * 4 -2),
+                        stepY:-2*numArray[Math.floor(Math.random()*numArray.length)],
+                        color:colorArray[Math.floor(Math.random()*colorArray.length)],
+                        disY:1
+                    };
+                    balls.push(ball);
+                }
+            }
+        }
+    }
+
+    /*渲染*/
+    function render(){
+        //重置画布宽度，达到清空画布的效果
+        canvas.height = 100;
+        //渲染时钟
+        for(var i = 0; i < data.length; i++){
+            renderDigit(i,data[i]);
+        }
+        //渲染小球
+        for(var i = 0; i < balls.length; i++){
+            cxt.beginPath();
+            cxt.arc(balls[i].x,balls[i].y,R,0,2*Math.PI);
+            cxt.fillStyle = balls[i].color;
+            cxt.closePath();
+            cxt.fill();
+        }
+    }
+
+    clearInterval(oTimer);
+    var oTimer = setInterval(function(){
+        //更新时钟
+        updateDigitTime();
+        //更新小球状态
+        updateBalls();
+        //渲染
+        render();
+    },50);
+}
+
+})();
+</script>
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://example.com/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/wallhaven.jfif">
+      <meta itemprop="name" content="braon-z">
+      <meta itemprop="description" content=" 爱一个人，攀一座山，追一次梦<br>不妨大胆一点，有很多事没有答案">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="braon-z's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          番外篇-mipi dsi 协议
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-04-27 09:14:17" itemprop="dateCreated datePublished" datetime="2021-04-27T09:14:17+08:00">2021-04-27</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-08-05 15:26:42" itemprop="dateModified" datetime="2021-08-05T15:26:42+08:00">2021-08-05</time>
+      </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Valine：</span>
+  
+    <a title="valine" href="/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>14k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>13 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>&nbsp;&nbsp;&nbsp;&nbsp; 阅读 MIPI Alliance Standard for Display Serial Interface V1.0 不照搬全文，有部分个人理解，可能会有内容删减。</p>
+<a id="more"></a>
+
+<h2 id="一、MIPI联盟显示系列接口的标准"><a href="#一、MIPI联盟显示系列接口的标准" class="headerlink" title="一、MIPI联盟显示系列接口的标准"></a>一、MIPI联盟显示系列接口的标准</h2><p>显示串行接口 (DSI) 规范定义了主机处理器和外围设备之间的协议，这些协议符合 MIPI 联盟的移动设备接口规范。 DSI 规范建立在现有标准的基础上，采用了 MIPI 联盟标准中为 DBI-2 [2]、DPI-2 [3] 和 DCS [1] 定义的像素格式和命令集。</p>
+<p>本规范规定了接口协议以及信号时序关系的描述，但没有规定电器规格和物理规格。此外此规范不包含 DPI-2 和 DBI-2 等传统接口。设备使用的辅助总线(i2c,spi等)本规范虽然不排斥，但也不包含在内。</p>
+<p>显示串行接口(DSI)定义了外设与移动设备之间的<strong>高速串行接口</strong>，通常用于显示模块显示，例如 lcd 的的显示。通过这个接口可以提高设备的性能，降低设备的功耗，减少设备需要的引脚，同时提高可维护性和兼容性。</p>
+<h2 id="1、相关术语"><a href="#1、相关术语" class="headerlink" title="1、相关术语"></a>1、相关术语</h2><p>“shall” 表示必须严格遵守的强制要求</p>
+<p>“must” 仅用于描述不可避免的情况</p>
+<p>“will” 仅仅用于陈述</p>
+<p>“should” 表示在多种可能性中推荐一种比较合适的。</p>
+<p>“may” 表示可能被允许</p>
+<p>“can” 表示可以、等于、能够</p>
+<h3 id="1-定义"><a href="#1-定义" class="headerlink" title="1) 定义"></a>1) 定义</h3><p><strong>Forward Direction(正向传输)：</strong> 从发送时钟一侧到接收时钟一侧的传输，相对于高速串行时钟的方向定义的信号方向。</p>
+<p><strong>Half duplex(半双工):</strong> 在一条通道上进行双向数据传输，允许传输和接收，但一次只能在一个方向。</p>
+<p><strong>HS Transmission(高速传输):</strong> 在 HS 模式下正向发送一个或多个数据包。 HS 传输在数据包传输之前和之后由 LP-11 状态定界。</p>
+<p><strong>Host Processor(主机处理器):</strong> 提供移动设备核心功能的硬件和软件。</p>
+<p><strong>Lane:</strong> 由两组互补的差分通道组成，用于传输数据或时钟信号</p>
+<p><strong>Lane Interconnect:</strong> 用于差分高速信号和低功耗单端信号的双线点对点互连。</p>
+<p><strong>Lane Module:</strong> 用于在 lane 上发送或接受数据</p>
+<p><strong>Link(链路):</strong> 两个设备之间包含一个时钟通道和至少一个数据通道的完整连接。</p>
+<p><strong>LP Transmission(低功耗传输):</strong> 在 LP 模式或 Escape 模式中发送一个或多个数据包。 LP 传输在数据包传输之前和之后由 LP-11 状态分隔</p>
+<p><strong>Packet:</strong> 遵守一定协议的数据格式。字节是构成数据包的基本数据单位。</p>
+<p><strong>Payload:</strong> 仅应用数据——删除了所有链接同步、标头、ECC 和校验和以及其他与协议相关的信息。 这是主机处理器和外设之间传输的“核心”</p>
+<p><strong>PHY :</strong> 组成 lane 的物理链路</p>
+<p><strong>PHY Configuration(PHY配置)：</strong> 一个 PHY 配置至少包含两个通道：一个时钟通道和一个或多个数据通道。</p>
+<p><strong>Reverse Direction:</strong> 反向是正向的相反方向。 请参阅Forward Direction 的说明。</p>
+<p><strong>Virtual Channel:(虚拟通道)</strong> 此规范支持最多四个外设的多个独立数据流。 每个外设的数据流是一个虚拟通道。 这些数据流可以交错并作为顺序数据包发送，每个数据包专用于特定的外围设备或通道。数据包协议包括将每个数据包定向到其预期外围设备的信息。</p>
+<p><strong>Word Count:</strong> 字节数</p>
+<h2 id="二、DSI-Introduction"><a href="#二、DSI-Introduction" class="headerlink" title="二、DSI Introduction"></a>二、DSI Introduction</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;DSI 指定了主机处理器和显示模块等外围设备之间的接口。它通过采用 DPI-2、DBI-2 和 DCS 标准中指定的像素格式和命令集，以现有 MIPI 联盟标准为基础。下图显示了一个简化的 DSI 接口。从概念上来说，它像外围设备发送像素或者命令，并且可以从外围设备读回状态或像素信息。它和传统的区别在于它将所有像素数据，命令，和时间序列化打包发送。从而减少了控制信号等并行线。从系统或软件的角度来看，序列化和反序列化操作应该是透明的。最明显也不可避免的问题就是，将并行数据转换回串行数据会增加外设响应时间。使用帧缓冲可以降低这样的延时。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/linux-lcd%E9%A9%B1%E5%8A%A8/phy.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627537718;10267451318&q-key-time=1627537718;10267451318&q-header-list=&q-url-param-list=&q-signature=89144ae577f1caef44f403c264e871f3a1cad840" width="70%" height="70%" alt="Figure 1 DSI Transmitter and Receiver Interface">
+
+<h3 id="1、DSI-Layer-Definitions"><a href="#1、DSI-Layer-Definitions" class="headerlink" title="1、DSI Layer Definitions"></a>1、DSI Layer Definitions</h3><p>DSI 从概念上可以划分为以下几个功能层。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/linux-lcd%E9%A9%B1%E5%8A%A8/mipi%20dsi%20%E5%88%86%E5%B1%82.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627540599;10267454199&q-key-time=1627540599;10267454199&q-header-list=&q-url-param-list=&q-signature=d3f218ebfbb9e9a5f599fd2b2c9db5f499c745a9" width="70%" height="70%" alt="Figure 2 DSI Layers">
+
+<h4 id="1）PHY-Layer"><a href="#1）PHY-Layer" class="headerlink" title="1）PHY Layer"></a>1）PHY Layer</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;PHY 层指定了传输介质，输入输出电路，通信过程中 “1” 和 “0” 采取时机。它也指定了传输开始 SoT 和传输结束 EoT 的通信协议，其中也包括发送和接受的特定信息。位级和字节级同步机制作为 PHY 的一部分包含在内</p>
+<h4 id="2）Lane-Management-Layer"><a href="#2）Lane-Management-Layer" class="headerlink" title="2）Lane Management Layer"></a>2）Lane Management Layer</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;通道管理层(Lane Management Layer), 可以根据应用的需求，数据通道可以旋转1-4组lane，发送端该层则用于管理将数据分发到各个通道，接收端该该层将收到的信号进行组合恢复到原有的状态，即分发器功能与合并功能.</p>
+<h4 id="3-Protocol-Layer"><a href="#3-Protocol-Layer" class="headerlink" title="3) Protocol Layer"></a>3) Protocol Layer</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;协议层(Low Level Protocol)规定了通过接口的位和字节的序列和值。 它指定如何将字节组织到称为数据包的定义组中。该协议定义了每个数据包所需的标头，以及如何生成和解释标头信息。 接口的发送端将报头和错误校验信息附加到正在发送的数据中。 在接收端，报头被剥离并由接收器中的相应逻辑解释。 错误检查信息可用于测试传入数据的完整性。 DSI 协议还记录了如何标记数据包以使用单个 DSI 将多个命令或数据流交织到不同的目的地。</p>
+<h4 id="4-Application-Layer"><a href="#4-Application-Layer" class="headerlink" title="4) Application Layer"></a>4) Application Layer</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;应用层(Application Layer)该层描述了数据流中包含的数据的更高级别的编码和解释。 根据显示子系统架构，它可能由具有规定格式的像素或由显示模块内的显示控制器解释的命令组成。 DSI 规范描述了像素值、命令和命令参数到数据包组件中字节的映射.</p>
+<h3 id="2、Command-and-Video-Modes"><a href="#2、Command-and-Video-Modes" class="headerlink" title="2、Command and Video Modes"></a>2、Command and Video Modes</h3><p>&nbsp;&nbsp;&nbsp;&nbsp;符合 DSI 的外设支持两种基本操作模式：Command Modes 和 Video Modes 。使用哪种模式取决于外设的架构和功能。模式定义反映了 DSI 用于显示互连的主要预期用途，但无意限制 DSI 在其他应用程序中运行。通常，外设既能进行命令模式操作也能进行视频模式操作。一些视频模式显示器还包括命令模式操作的简化形式，其中显示器可以从缩小尺寸或部分帧缓冲区刷新其屏幕，并且可以关闭与主机处理器的接口 (DSI) 以降低功耗</p>
+<h4 id="1-Command-Mode"><a href="#1-Command-Mode" class="headerlink" title="1) Command Mode"></a>1) Command Mode</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;Command Mode 用于向外设发送数据和命令，例如包含显示控制器的外设，显示控制器可以包括本地寄存器和帧缓冲器。系统使用 Command Mode 读写寄存器和 frame buffer memory. 处理器通过向显示控制器发送命令、参数和数据来间接控制外设的活动。处理器还可以读取显示模块状态信息或帧存储器的内容.Command Mode 需要双向接口。</p>
+<h4 id="2-Video-Mode-Operation"><a href="#2-Video-Mode-Operation" class="headerlink" title="2) Video Mode Operation"></a>2) Video Mode Operation</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;Video Mode 指以实时像素流的形式从处理器传输到外围设备的操作。在正常操作中，显示模块依赖主机处理器以足够的带宽提供图像数据，以避免显示图像中出现闪烁或其他可见伪影。</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;一些 Video Mode 架构可能包括一个简单的时序控制器和部分帧缓冲器，用于在待机或低功耗模式下保持部分屏幕或较低分辨率的图像。这允许关闭接口以降低功耗。</p>
+<p>为了降低复杂性和成本，仅在视频模式下运行的系统可以使用单向数据路径。</p>
+<h4 id="3-Virtual-Channel-Capability"><a href="#3-Virtual-Channel-Capability" class="headerlink" title="3) Virtual Channel Capability"></a>3) Virtual Channel Capability</h4><p>&nbsp;&nbsp;&nbsp;&nbsp;用于支持多个显示器同时显示，DSI 允许多达 4 个虚拟通道，使多个外设的流量能够共享一个公共 DSI 链路。在一些高分辨率显示器设计中，多个物理驱动器服务于普通显示面板的不同区域。每个驱动程序都与自己的显示控制器集成在一起，该控制器通过 DSI 连接到主机处理器。使用虚拟通道，显示控制器将数据定向到各个驱动程序，无需多个接口或复杂的多路复用方案。</p>
+<h2 id="三、DSI-Physical-Layer"><a href="#三、DSI-Physical-Layer" class="headerlink" title="三、DSI Physical Layer"></a>三、DSI Physical Layer</h2><p>&nbsp;&nbsp;&nbsp;&nbsp;本节简要概述了DSI中使用的物理层，处理器和外设使用使用 clock + 一个或多个串行数据线来传输信息。通过总线发送高速串行数据的行为叫做 HS transmission 或者 burst</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%203%20Basic%20HS%20Transmission%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627900224;10267813824&q-key-time=1627900224;10267813824&q-header-list=&q-url-param-list=&q-signature=dd85b03ed2114936af5cf10dbd1907ca3c04f2b1" width="90%" height="90%" alt="Figure 3 Basic HS Transmission Structure">
+
+
+<p>D-PHY 低级协议规定最小数据单位为一个字节，一次传输包含整数个字节</p>
+<h3 id="1、Data-Flow-Control"><a href="#1、Data-Flow-Control" class="headerlink" title="1、Data Flow Control"></a>1、Data Flow Control</h3><p>&nbsp;&nbsp;&nbsp;&nbsp;协议层和 PHY 层之间没有握手，允许协议层在传输进行时限制进出 PHY 层的数据传输。 数据包的发送和接收应完整无间断。 链路两端的协议层和数据缓冲应始终具有等于或大于 PHY 层电路的带宽。 一个实际的结果是系统实现者应该确保接收器的带宽能力等于或大于发射器的带宽能力。</p>
+<h3 id="2、Bidirectionality-and-Low-Power-Signaling-Policy"><a href="#2、Bidirectionality-and-Low-Power-Signaling-Policy" class="headerlink" title="2、Bidirectionality and Low Power Signaling Policy"></a>2、Bidirectionality and Low Power Signaling Policy</h3><p>DSI 实现的物理层由一到四个数据通道和一个时钟通道组成。 在 Command Mode 系统中，数据 lane 0 应该是双向的； 其他的数据 lane 应该是单向的。 在 Video Mode 系统中，数据 lane 0 可以是双向的或单向的；其他的数据 lane 应该是单向的。 有关详细信息，请参阅第 3 和 4 节。对于这两种接口类型，时钟通道只能由主处理器驱动，而不能由外设驱动。</p>
+<p>正向的低功率传输应该使用数据 lane 0，数据 lane 0 上的反向传输应使用 Low Power Mode。外围设备应能够在 Low Power Mode 或 High Speed Mode 下接收任何传输。 请注意，在 LP 模式下传输时，传输带宽会大大减少。</p>
+<p>对于双向通道，应仅使用低功耗 (LP) 模式在外设到处理器或反向传输数据。 有关不同传输模式的详细信息，请参阅 D-PHY 的 MIPI 联盟标准 [4]。 </p>
+<p>PHY 和协议层之间的接口有几个控制总线方向的信号。 当主机发送器需要来自外设的响应时，例如 返回 READ 数据或状态信息，它在传输的最后一个数据包期间向其 PHY 报告 TurnRequest。 这告诉 PHY 层在 EoT 序列之后声明总线转向 (BTA) 命令。</p>
+<p>当外设接收到 Bus Turn-Around 命令时，其 PHY 层将 TurnRequest 响应为协议层的输入。 这告诉接收协议层它应该准备向处理器发送响应。 通常，刚接收到的数据包会告诉协议层一旦总线可用于传输到处理器时要发送什么信息。</p>
+<p>在发送其响应后，外设类似地使用 TurnRequest 将总线控制权交还给处理器到其自己的 PHY 层。</p>
+<h3 id="3、Command-Mode-Interfaces"><a href="#3、Command-Mode-Interfaces" class="headerlink" title="3、Command Mode Interfaces"></a>3、Command Mode Interfaces</h3><p>在 Command Mode 下运行的 DSI 处理器的最低物理层要求是：</p>
+<ul>
+<li>Data Lane Module: CIL-MUYY (HS-TX, LP-TX, LP-RX, and LP-CD)</li>
+<li>Clock Lane Module: CIL-MCNN (HS-TX, LP-TX)</li>
+</ul>
+<p>在命令模式下运行的 DSI 外设的最低物理层要求是:</p>
+<ul>
+<li>Data Lane Module: CIL-SUYY (HS-RX, LP-RX, LP-TX, and LP-CD)</li>
+<li>Clock Lane Module: CIL-SCNN (HS-RX, LP-RX)</li>
+</ul>
+<p>双向链路应支持反向 Escape Mode 和正向 Escape Mode</p>
+<h3 id="4、Video-Mode-Interfaces"><a href="#4、Video-Mode-Interfaces" class="headerlink" title="4、Video Mode Interfaces"></a>4、Video Mode Interfaces</h3><p>在 Video Mode 下运行的 DSI 发射机的最低物理层要求是：</p>
+<ul>
+<li>Data Lane Module: CIL-MUNN (HS-TX, LP-TX)</li>
+<li>Clock Lane Module: CIL-MCNN (HS-TX, LP-TX)</li>
+</ul>
+<p>在 Video Mode 下运行的 DSI 接收器的最低物理层要求是：</p>
+<ul>
+<li>Data Lane Module: CIL-SUNN (HS-RX, LP-RX)</li>
+<li>Data Lane Module: CIL-SUNN (HS-RX, LP-RX)</li>
+</ul>
+<p>所有 DSI 实现都应支持所有数据 lane 上的  forward escape ULPM</p>
+<h4 id="5、Bidirectional-Control-Mechanism"><a href="#5、Bidirectional-Control-Mechanism" class="headerlink" title="5、Bidirectional Control Mechanism"></a>5、Bidirectional Control Mechanism</h4><p>总线转向由 token-passing 机制控制：主机处理器发送 Bus Turn- Around (BTA) 请求，该请求向外设传达其释放或停止驱动数据路径的意图，在此之后外设可以传输数据路径一个或多个数据包返回到主机处理器。</p>
+<h4 id="6、Clock-Management"><a href="#6、Clock-Management" class="headerlink" title="6、Clock Management"></a>6、Clock Management</h4><p>DSI 时钟是从主机处理器到外设的信号。 在某些系统中，它可能具有多种功能：</p>
+<p>DSI Bit Clock：在整个链路中，DSI 时钟用作源同步位时钟，用于在接收器 PHY 中捕获串行数据位。 在传输数据时，该时钟应处于活动状态。</p>
+<p>Byte Clock: 利用 DSI时钟在协议层和应用层之间生成的时钟，在 HS 传输过程中，每个字节的数据都伴随着一个字节时钟。</p>
+<p>Application Clock(s):  DSI Bit Clock 的分频版本可用于外设的其他时钟功能。这些“应用时钟”可能需要在没有串行数据传输时运行，或者它们可能需要持续运行（连续时钟）以支持外设的活动电路。例如：一些 mipi 转 rgb ic 可能会用到这个时钟。</p>
+<p>对于连续时钟行为，时钟通道保持高速模式，在 HS 数据包传输之间生成活动时钟信号。 对于非连续时钟行为，时钟通道在 HS 数据包传输之间进入 LP-11 状态。</p>
+<h4 id="7、Clock-Requirements"><a href="#7、Clock-Requirements" class="headerlink" title="7、Clock Requirements"></a>7、Clock Requirements</h4><p>所有 DSI 发送器和接收器都应支持时钟通道上的连续时钟行为，并可选择支持非连续时钟行为。 DSI 处理器应支持需要它的系统的连续时钟，并具有关闭串行时钟的能力以降低功耗。</p>
+<p>请注意，处理器控制所需的时钟操作模式,主机协议和应用程序控制 Clock Lane 操作模式(High Speed or Low Power mode). 系统设计人员负责了解连接到 DSI 的外设的时钟要求，并根据这些要求控制时钟行为。</p>
+<p>请注意，在低功耗信号模式下，LP 时钟在功能上嵌入在数据信号中。 当 LP 数据传输结束时，时钟有效地停止并且后续的 LP 时钟不可用于外设。 如果外设需要额外的时钟来推进其逻辑状态、通过顺序缓冲区或类似方式移动数据，则可能需要向 LP 传输添加“虚拟”数据字节以影响状态机的前进进程或推进数据 通过时序逻辑。</p>
+<p>BTA 的握手过程只允许主机处理器和外设之间的 Escape Mode 时钟频率存在有限的不匹配。处理器和外设之间的 Escape Mode 频率比不得超过 3:2。处理器负责控制自己的时钟频率以匹配外设。处理器 LP 时钟频率应在外围 LP 时钟频率的 67% 到 150% 的范围内。因此，外设实现者应指定外设的标称 LP 时钟频率和保证精度。</p>
+<h4 id="8、Clock-Power-and-Timing"><a href="#8、Clock-Power-and-Timing" class="headerlink" title="8、Clock Power and Timing"></a>8、Clock Power and Timing</h4><p>D-PHY 的 MIPI 联盟标准 [4] 中的附加时序要求指定了数据信号的功率状态和时钟信号的功率状态之间的时序关系。 主机处理器有责任观察这种时序关系。 如果 DSI 时钟连续运行，则这些时序要求不适用。</p>
+<h2 id="四、Multi-Lane-Distribution-and-Merging"><a href="#四、Multi-Lane-Distribution-and-Merging" class="headerlink" title="四、Multi-Lane Distribution and Merging"></a>四、Multi-Lane Distribution and Merging</h2><p>DSI 是一种通道可扩展的规范。 需要比一个数据通道提供更多带宽的应用程序可以将数据路径扩展到两个、三个或四个通道的宽度，并在峰值总线带宽上获得近似线性的增长。 该规范明确记录了应用程序数据和串行位流之间的映射，以确保使用多个通道的主机处理器和外设之间的兼容性。</p>
+<p>多通道实现应使用单个公共时钟信号，由所有数据通道共享。</p>
+<p>从概念上讲，PHY 和更高功能块之间是一个支持多通道操作的层。 在发送器中，如图 4 所示，该层在 N 条通道上分配一个数据包字节序列，其中每个通道都是一个独立的逻辑块和接口电路。 在接收器中，如图 5 所示，该层收集来自 N 个通道的传入字节，并将这些字节合并为完整的数据包，以传递到以下数据包分解器中。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%204%20Lane%20Distributor%20Conceptual%20Overview.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627956464;10267870064&q-key-time=1627956464;10267870064&q-header-list=&q-url-param-list=&q-signature=639b8d645102c8ad7b58aed023837eb21849d2ed" width="60%" height="60%" alt="Figure 4 Lane Distributor Conceptual Overview">
+
+<p>Lane Distributor 接受任意字节长度的 HS 传输，缓冲 N 个字节，其中 N 是接口中实现的 Lanes 的数量，并在 N 个 Lanes 上并行发送 N 个字节的组。 在发送数据之前，所有通道并行执行 SoT 序列，以向其相应的接收单元指示数据包的第一个字节开始。 在 SoT 之后，车道从第一个数据包开始并行发送一组 N 个字节，遵循循环过程。 例如，对于双通道系统，数据包的字节 0 进入通道 0，字节 1 进入通道 1，字节 2 进入通道 0，字节 3 进入通道 1，依此类推。 </p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%205%20Lane%20Merger%20Conceptual%20Overview.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627956670;10267870270&q-key-time=1627956670;10267870270&q-header-list=&q-url-param-list=&q-signature=46261455356456e4a9b2615e784f4f8a1ccb0980" width="60%" height="60%" alt="Figure 5 Lane Merger Conceptual Overview">
+
+<h3 id="1、Multi-Lane-Interoperability-and-Lane-number-Mismatch"><a href="#1、Multi-Lane-Interoperability-and-Lane-number-Mismatch" class="headerlink" title="1、Multi-Lane Interoperability and Lane-number Mismatch"></a>1、Multi-Lane Interoperability and Lane-number Mismatch</h3><p>使用的通道数应为静态参数。 它应在系统设计或初始配置时固定，不得动态更改。 通常，外设的带宽要求及其相应的通道配置确定了系统中使用的通道数。 </p>
+<p>处理器应配置为支持外设所需的相同通道数。 具体而言，具有 N-Lane 能力 (N &gt; 1) 的处理器应能够使用较少的通道进行操作，以确保与具有 M 通道的外围设备的互操作性，其中 N &gt; M。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%206%20Four-Lane%20Transmitter%20with%20Two-Lane%20Receiver%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627957336;10267870936&q-key-time=1627957336;10267870936&q-header-list=&q-url-param-list=&q-signature=ed399f4fe3e72b78252bda15adbc3bdb470f5f47" width="80%" height="80%" alt="Figure 6 Four-Lane Transmitter with Two-Lane Receiver Example">
+
+<h4 id="1-Clock-Considerations-with-Multi-Lane"><a href="#1-Clock-Considerations-with-Multi-Lane" class="headerlink" title="1) Clock Considerations with Multi-Lane"></a>1) Clock Considerations with Multi-Lane</h4><p>在 EoT，协议层应根据最后一个活动通道模块的时序要求对公共 DSI 时钟信号进行控制。 如果协议层将 DSI 时钟置于 HS 传输之间的 LPS 中以节省功率，则它应遵守 DSI 时钟相对于 EoT 序列期间所有串行数据信号的时序要求.在 SoT 之前，应同样遵守与所有串行数据信号相关的 DSI 时钟启动的时序要求。 </p>
+<h4 id="2-Bi-directionality-and-Multi-Lane-Capability"><a href="#2-Bi-directionality-and-Multi-Lane-Capability" class="headerlink" title="2) Bi-directionality and Multi-Lane Capability"></a>2) Bi-directionality and Multi-Lane Capability</h4><p>外设通常对将数据返回到主机处理器没有大量的带宽要求。 为了保持设计简单并提高互操作性，所有符合 DSI 的系统都只能在 LP 模式下使用通道 0 将数据从外设返回到主机处理器。</p>
+<h4 id="3-SoT-and-EoT-in-Multi-Lane-Configurations"><a href="#3-SoT-and-EoT-in-Multi-Lane-Configurations" class="headerlink" title="3) SoT and EoT in Multi-Lane Configurations"></a>3) SoT and EoT in Multi-Lane Configurations</h4><p>由于 HS 传输由任意数量的字节组成，这些字节可能不是通道数的整数倍，因此某些通道可能会先于其他通道用完数据。 因此，Lane Management layer 在缓冲最后一组少于 N 个字节时，将其“有效数据”信号无效到所有没有进一步数据的通道中。</p>
+<p>尽管所有 Lanes 都同时以并行 SoT 启动，但每个 Lane 独立运行，并且可能在其他 Lanes 之前完成 HS 传输，提前一个周期（字节）发送 EoT。</p>
+<p>Link 接收端的 N 个 PHY 并行收集字节并将它们馈送到 Lane Management layer。 Lane Management layer 重建传输中的原始字节序列。图 7 和图 8 说明了 HS 传输可以针对不同通道数和数据包长度终止的各种方式。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%207%20Two%20Lane%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627958691;10267872291&q-key-time=1627958691;10267872291&q-header-list=&q-url-param-list=&q-signature=de8ea11cf706162c17ada819b47f06045bd5742a" width="80%" height="80%" alt="Figure 7 Two Lane HS Transmission Example">
+
+<p>注意多通道实现的特殊情况，有 N 个通道，它可能偶尔发送一个短的 HS 传输，其中数据包长度小于 N。在这种情况下，没有要传输的数据的通道应保留在 LPS 中</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%208%20Three%20Lane%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1627958828;10267872428&q-key-time=1627958828;10267872428&q-header-list=&q-url-param-list=&q-signature=fbac701716e9a294782b808a0554510b60805b09" width="80%" height="80%" alt="Figure 8 Three Lane HS Transmission Example">
+
+<h2 id="五、DSI-Protocol"><a href="#五、DSI-Protocol" class="headerlink" title="五、DSI Protocol"></a>五、DSI Protocol</h2><p>在 DSI 链路的发射机侧，并行数据、信号事件和命令在协议层转换为数据包，遵循本节中记录的数据包组织。 协议层附加数据包协议信息和报头，然后通过通道管理层向 PHY 发送完整的字节。 数据包由 PHY 序列化并通过串行链路发送。 DSI 链路的接收端执行与发送端相反的操作，将数据包分解为并行数据、信号事件和命令。</p>
+<p>如果有多个通道，通道管理层会将字节分配到单独的 PHY，每个通道一个 PHY，如第 6 节所述。数据包协议和格式与所使用的通道数量无关。</p>
+<h3 id="1、Multiple-Packets-per-Transmission"><a href="#1、Multiple-Packets-per-Transmission" class="headerlink" title="1、Multiple Packets per Transmission"></a>1、Multiple Packets per Transmission</h3><p>第一种是单独传输，一次传输可能包含一个数据包。但是这种情况如果要传输许多数据包并且据包分开发送，LPS 和高速模式之间频繁切换的开销将严重限制带宽。</p>
+<p>第二种是单次传输，一次传输多个数据，DSI 协议允许连接多个数据包，这大大提高了有效带宽。这对于外设初始化等事件很有用，在这些事件中，许多寄存器可能会在系统启动时加载单独的写命令。图 9 说明了单独发送的多个数据包，并在单个 HS 传输中作为串联数据包发送。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%209%20Multiple%20Packet%20HS%20Transmission%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628059834;10267973434&q-key-time=1628059834;10267973434&q-header-list=&q-url-param-list=&q-signature=6f7ce3df7a2acb448d2c16d5f407c5849438f0fc" width="80%" height="80%" alt="Figure 9 Multiple Packet HS Transmission Example">
+
+<h3 id="2、Packet-Composition"><a href="#2、Packet-Composition" class="headerlink" title="2、Packet Composition"></a>2、Packet Composition</h3><p>数据包的第一个字节，即数据标识符 (DI)，包括指定数据包长度的信息。 例如，在显示应用中的视频模式系统中，数据包的逻辑单元可以是一条水平显示线。 命令模式系统发送命令和相关参数集，参数数量取决于命令类型。数据包的大小可分为两类：</p>
+<p>短数据包使用数据类型字段指定有效传送数据，长度为 2 到 9 个字节。有关有效传送数据，请参见表 16 和表 18。大多数命令模式命令和相关参数都使用短数据包。其他短数据包传达事件，如 H Sync 和 V Sync 。因为它们是短数据包，所以它们可以将准确的时序信息传送到外设的逻辑。</p>
+<p>长数据包使用两字节字数字段指定有效传送数据。 有效传送数据的长度可以从 0 到 216 - 1 个字节。 因此，一个 Long 数据包的长度可能高达 65,541 字节。 长数据包允许传输大块的像素或其他数据。</p>
+<p>命令模式操作的一个特例是视频速率（更新）流，它采用传输到外围设备的任意长的像素或其他数据流的形式。 由于所有 DSI 事务都使用数据包，因此视频流应分解为单独的数据包。 这种“打包”可以通过硬件或软件来完成。 然后外围设备可以将数据包重新组合成连续的视频流以供显示。</p>
+<p>Set Maximum Return Packet Size 命令允许主机处理器限制来自外设的响应数据包的大小。 有关命令的说明，请参阅第 8.8.8.3 节。</p>
+<h3 id="3、Endian-Policy"><a href="#3、Endian-Policy" class="headerlink" title="3、Endian Policy"></a>3、Endian Policy</h3><p>所有分组数据都以字节形式穿过接口。 按顺序，发送器应先发送数据 LSB，最后发送MSB。 对于具有多字节字段的数据包，除非在数据包定义中指明，最低有效字节应首先传输。</p>
+<h3 id="4、General-Packet-Structure"><a href="#4、General-Packet-Structure" class="headerlink" title="4、General Packet Structure"></a>4、General Packet Structure</h3><p>为低级协议通信定义了两种数据包结构：长数据包和短数据包。 对于这两种数据包结构，数据标识符始终是数据包的第一个字节。</p>
+<h4 id="1-Long-Packet-Format"><a href="#1-Long-Packet-Format" class="headerlink" title="1) Long Packet Format"></a>1) Long Packet Format</h4><p>长数据包由 32 位数据包头 (PH)、具有可变字节数的有效传送数据和 16 位数据包尾 (PF)。</p>
+<p><strong>数据包头 (PH)：</strong></p>
+<ul>
+<li>数据标识符（DI）1byte：含虚拟数据通道VC[7:6]和数据类型DT[5:0]</li>
+<li>字节数（WC）2 byte：要传送的数据，长度固定两个字节</li>
+<li>误差校正码（ECC）1byte：可以把一个位的错误纠正</li>
+</ul>
+<p><strong>有效传送数据：</strong></p>
+<ul>
+<li>6 ~ 65541 bytes 可变数据长度，最大字节 = 2^16</li>
+</ul>
+<p><strong>数据包页脚（2 byte）：</strong></p>
+<ul>
+<li>用于校验</li>
+</ul>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2010%20Long%20Packet%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063036;10267976636&q-key-time=1628063036;10267976636&q-header-list=&q-url-param-list=&q-signature=b15a0ae687429b35488b06b2880bf4f4244baa06" width="80%" height="80%" alt="Figure 10 Long Packet Structure">
+
+<p>数据标识符定义了数据的虚拟通道和具有可变字节数的有效传送数据。 有关数据类型的说明，请参阅第 8.8 至 8.10 节</p>
+<p>字数定义了有效传送数据中从包头结束到包尾开始之间的字节数。 包头和包尾均不应包含在字数统计中。</p>
+<p>纠错码 (ECC) 字节允许在包头中纠正单比特错误和检测 2 比特错误。 这包括数据标识符和字数统计字段。</p>
+<p>一旦接收器读取了有效传送数据，它就会读取数据包页脚中的校验和。 主机处理器应始终在数据包页脚中计算和传输校验和。 计算校验和不需要外设。 还要注意零字节有效传送数据的特殊情况：如果有效载荷的长度为 0，则校验和计算结果为 (FFFFh)。 如果未计算校验和，则数据包页脚将由两个全零字节 (0000h) 组成。 有关计算校验和的更多信息，请参见第 9 节。</p>
+<p>在一般情况下，有效传送数据的长度应为字节的倍数。 此外，每种数据格式都可能对有效传送数据的长度施加额外的限制，例如 四个字节的倍数。</p>
+<p>每个字节应首先传输最低有效位。 有效传送数据可以以仅受数据格式要求限制的任何字节顺序传输。 字数和校验和等多字节元素应首先传输最低有效字节。</p>
+<h4 id="2-Short-Packet-Format"><a href="#2-Short-Packet-Format" class="headerlink" title="2) Short Packet Format"></a>2) Short Packet Format</h4><p><strong>短数据包</strong>：4byte 固定长度，主要用于传输命令，读写寄存器</p>
+<ul>
+<li>数据标识符(DI) 1byte：含虚拟数据通道[7:6]和数据类型[5:0]</li>
+<li>数据包 2byte: 要传送的数据</li>
+<li>误差校正码(CEE) 1byte: 可以把一个位的错误纠正</li>
+</ul>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2011%20Short%20packet%20Structure.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063105;10267976705&q-key-time=1628063105;10267976705&q-header-list=&q-url-param-list=&q-signature=8f06749371745d54498d2996a689923d0244cd09" width="80%" height="80%" alt="Figure 11 Short packet Structure">
+
+<h3 id="5、Common-Packet-Elements"><a href="#5、Common-Packet-Elements" class="headerlink" title="5、Common Packet Elements"></a>5、Common Packet Elements</h3><p>描述长包和短包的共有元素</p>
+<h4 id="1-Data-Identifier-Byte"><a href="#1-Data-Identifier-Byte" class="headerlink" title="1) Data Identifier Byte"></a>1) Data Identifier Byte</h4><p>任何数据包的第一个字节是 DI（数据标识符）字节。 图 12 显示了数据标识符 (DI) 字节的组成。</p>
+<p><strong>DI[7:6]:</strong> 这两个位识别指向四个虚拟通道中的一个的数据。</p>
+<p>一个处理器可以使用标记命令或数据块为多达四个外设提供服务，使用针对不同外设的数据包的报头的虚拟通道 ID 字段。 虚拟通道 ID 通过将数据包复用到公共传输通道上，使一个串行流能够为两个或多个虚拟外设提供服务。 请注意，在单个传输中发送的数据包每个都有自己的虚拟通道分配，并且可以定向到不同的外围设备。 尽管 DSI 协议允许与多个外设进行通信，但该规范仅涉及主机处理器与单个外设的连接。 连接到多个物理外围设备的实现细节超出了本文档的范围。 </p>
+<p><strong>DI[5:0]:</strong> 这六个位指定了数据类型。</p>
+<p>数据类型字段指定了数据包内容的大小、格式以及在某些情况下的解释。 例如，在最小情况下，DT 字段是数据包内容。 通过指定数据包大小，它通知接收者在数据包的剩余部分中预期有多少字节。 这是必要的，因为没有特殊的数据包开始/结束同步代码来指示数据包的开始和结束。 这允许数据包传送任意数据，但它也需要数据包头来明确指定数据包的大小。 当接收逻辑倒计时到数据包结束时，它应假定下一个数据要么是新数据包的标头，要么是 EoT（传输结束）序列。 </p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2012%20Data%20Identifier%20Byte.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628063360;10267976960&q-key-time=1628063360;10267976960&q-header-list=&q-url-param-list=&q-signature=6f96cb13042d5866d5b38af127cf41f864ce34a8" width="50%" height="50%" alt="Figure 12 Data Identifier Byte">
+
+<p>Virtual Channel Identifier – VC field, DI[7:6]</p>
+<h4 id="2-Error-Correction-Code"><a href="#2-Error-Correction-Code" class="headerlink" title="2) Error Correction Code"></a>2) Error Correction Code</h4><p>纠错码允许在包头中纠正单比特错误和检测 2 比特错误。 主机处理器应始终计算并传输 ECC 字节。 计算 ECC 字节不需要外设。 如果不使用 ECC，则应传输一个全零 (00h) 的字节。</p>
+<h3 id="6、Interleaved-Data-Streams"><a href="#6、Interleaved-Data-Streams" class="headerlink" title="6、Interleaved Data Streams"></a>6、Interleaved Data Streams</h3><img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2013%20Interleaved%20Data%20Stream%20Example.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628064032;10267977632&q-key-time=1628064032;10267977632&q-header-list=&q-url-param-list=&q-signature=1efe21a07a5ab974951db520fcec3f9076f7d636" width="70%" height="70%" alt="Figure 13 Interleaved Data Stream Example">
+
+<p>多通道的一种应用是在单个显示模块上使用两个或多个独立驱动器 IC 的高分辨率显示器。 每个驱动器 IC 仅寻址显示设备上的一部分列。 每个驱动程序 IC 仅捕获并显示针对该驱动程序的数据包内容，而忽略其他数据包。 参见图 14。</p>
+<img src="https://myblog-1258129986.cos.ap-chengdu.myqcloud.com/linux%E9%A9%B1%E5%8A%A8/mipi/Figure%2014%20Logical%20Channel%20Block%20Diagram%20%28Receiver%20Case%29.png?q-sign-algorithm=sha1&q-ak=AKIDhKF3mfZXf8SeirDbHrMiLZbzDlsoqM1W&q-sign-time=1628064215;10267977815&q-key-time=1628064215;10267977815&q-header-list=&q-url-param-list=&q-signature=1cf0da05d9274f169f9c0415c4ce1accf82aa88c" width="70%" height="70%" alt="Figure 14 Logical Channel Block Diagram (Receiver Case)">
+
+<h4 id="1-Interleaved-Data-Streams-and-Bi-directionality"><a href="#1-Interleaved-Data-Streams-and-Bi-directionality" class="headerlink" title="1) Interleaved Data Streams and Bi-directionality"></a>1) Interleaved Data Streams and Bi-directionality</h4><p>当多个外设具有双向功能时，应有一种清晰明确的方法将 READ 数据、事件和状态从预期外设返回到主机处理器。 BTA 和虚拟通道 ID 的组合确保不会混淆期望哪个外设响应来自外设的任何请求。 </p>
+<p>双向性的结果是来自主机处理器的任何传输都不得包含超过一个需要外设响应的数据包。 无论通过链路连接到主机处理器的外设数量如何，这都适用。</p>
+<h3 id="7、Processor-to-Peripheral-Direction-Processor-Sourced-Packet-Data-Types"><a href="#7、Processor-to-Peripheral-Direction-Processor-Sourced-Packet-Data-Types" class="headerlink" title="7、Processor to Peripheral Direction (Processor-Sourced) Packet Data Types"></a>7、Processor to Peripheral Direction (Processor-Sourced) Packet Data Types</h3><table>
+<thead>
+<tr>
+<th>Data&nbsp;Type, Hex</th>
+<th>Data&nbsp;Type,&nbsp;binary</th>
+<th>Description</th>
+<th>Packet&nbsp;Size</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x01</td>
+<td>00 00001</td>
+<td>Sync Event, V Sync Start</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x11</td>
+<td>01 0001</td>
+<td>Sync Event, V Sync End</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x21</td>
+<td>10 0001</td>
+<td>Sync Event, H Sync Start</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x31</td>
+<td>11 0001</td>
+<td>Sync Event, H Sync End</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x02</td>
+<td>00 0010</td>
+<td>Color Mode(CM) Off Command</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x12</td>
+<td>01 0010</td>
+<td>Color Mode(CM) On Command</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x22</td>
+<td>10 0010</td>
+<td>Shut Down Peripheral Command</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x32</td>
+<td>11 0010</td>
+<td>Turn On Peripheral Command</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>x3h and xBh</td>
+<td>xx x011</td>
+<td>TGeneric WRITE, 0-7 parameters, bits 5:3 = parameter count</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>x4h and xCh</td>
+<td>xx x100</td>
+<td>Generic READ, 0-7 parameters, bits 5:3 = parameter count</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>x5h and xDh</td>
+<td>xx x101DCS WRITE, 0-6 parameters, bits 5:3 = parameter count + 1</td>
+<td>Short</td>
+<td></td>
+</tr>
+<tr>
+<td>0x06</td>
+<td>00 0110</td>
+<td>DCS READ, no parameters</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x37</td>
+<td>00 0110</td>
+<td>Set Maximum Return Packet Size</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x09</td>
+<td>00 1001</td>
+<td>Null Packet, no data</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x19</td>
+<td>01 1001</td>
+<td>Blanking Packet, no data</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x29</td>
+<td>10 1001</td>
+<td>Generic Non-image Packet</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x39</td>
+<td>11 1001</td>
+<td>DCS Long Write/write_LUT Command Packet</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x0E</td>
+<td>00 1110</td>
+<td>Packed Pixel Stream, 16-bit RGB, 5-6-5 Format</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x1E</td>
+<td>01 1110</td>
+<td>Packed Pixel Stream, 18-bit RGB, 6-6-6 Format</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x2E</td>
+<td>10 1110</td>
+<td>Loosely Packed Pixel Stream, 18-bit RGB, 6-6-6 Format</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>0x3E</td>
+<td>11 1110</td>
+<td>Packed Pixel Stream, 24-bit RGB, 8-8-8 Format</td>
+<td>Short</td>
+</tr>
+<tr>
+<td>x0h and xFh, unspecified</td>
+<td>xx 0000</br>xx 1111</td>
+<td>DO NOT USE</br>All unspecified codes are reserved</td>
+<td>Short</td>
+</tr>
+</tbody></table>
+<h3 id="8、Processor-to-Peripheral-Transactions-–-Detailed-Format-Description"><a href="#8、Processor-to-Peripheral-Transactions-–-Detailed-Format-Description" class="headerlink" title="8、Processor-to-Peripheral Transactions – Detailed Format Description"></a>8、Processor-to-Peripheral Transactions – Detailed Format Description</h3><h4 id="1-Sync-Event-H-Start-H-End-V-Start-V-End-Data-Type-xx-0001-x1h"><a href="#1-Sync-Event-H-Start-H-End-V-Start-V-End-Data-Type-xx-0001-x1h" class="headerlink" title="1) Sync Event (H Start, H End, V Start, V End), Data Type = xx 0001 (x1h)"></a>1) Sync Event (H Start, H End, V Start, V End), Data Type = xx 0001 (x1h)</h4><p>同步事件是两字节的数据包（一个命令字节，一个 ECC 字节），因此可以在时间上准确地表示同步脉冲的开始和结束等事件。 由于“开始”和“结束”是独立且不同的事件，同步脉冲的长度以及相对于活动像素数据的位置，前后肩延时可准确传达至外设。同步事件定义如下：</p>
+<ul>
+<li>Data Type = 00 0001 (01h) V Sync Start</li>
+<li>Data Type = 01 0001 (11h) V Sync End</li>
+<li>Data Type = 10 0001 (21h) H Sync Start</li>
+<li>Data Type = 11 0001 (31h) H Sync End</li>
+</ul>
+<p>为了尽可能准确地表示时序信息，V Sync Start 事件表示 VSA 的开始，并且还暗示 VSA 第一行的 H Sync Start 事件。 类似地，V Sync End 事件意味着 VSA 最后一行的 H Sync Start 事件。</p>
+<p>如果需要传送准确的脉冲长度信息，同步事件应该成对发生，即同步开始和同步结束。 或者，如果只需要单个时间点（事件），则可以将单个同步事件（通常为同步开始）传输到外设。 同步事件可以与 blanking packets 连接以准确传达行间定时，并避免为每个事件在 LPS 和 HS 之间切换的开销。 但是请注意，将数据线保持在 HS 模式下会产生功率损失。</p>
+<p>不需要传统同步/消隐/像素定时的显示模块应以高速突发传输像素数据，然后将总线置于低功耗模式，以降低功耗。 推荐的突发大小是像素的扫描线，可以临时存储在显示模块上的行缓冲区中。 </p>
+<h4 id="2-Color-Mode-On-Command-Data-Type-00-0010-02h"><a href="#2-Color-Mode-On-Command-Data-Type-00-0010-02h" class="headerlink" title="2) Color Mode On Command, Data Type = 00 0010 (02h)"></a>2) Color Mode On Command, Data Type = 00 0010 (02h)</h4><p>Color Mode On 是一个单字节数据包命令（两个字节带有 ECC），它将 Video Mode 显示模块切换到低色彩模式以节省电量。</p>
+<h4 id="3-Color-Mode-Off-Command-Data-Type-01-0010-12h"><a href="#3-Color-Mode-Off-Command-Data-Type-01-0010-12h" class="headerlink" title="3) Color Mode Off Command, Data Type = 01 0010 (12h)"></a>3) Color Mode Off Command, Data Type = 01 0010 (12h)</h4><p>Color Mode Off 是一个单字节数据包（两个字节带有 ECC）命令，它将 Video Mode 显示模块从低颜色模式返回到正常显示操作。</p>
+<h4 id="4-Shutdown-Peripheral-Command-Data-Type-10-0010-22h"><a href="#4-Shutdown-Peripheral-Command-Data-Type-10-0010-22h" class="headerlink" title="4) Shutdown Peripheral Command, Data Type = 10 0010 (22h)"></a>4) Shutdown Peripheral Command, Data Type = 10 0010 (22h)</h4><p>Shutdown Peripheral 命令是一个两字节的数据包（一个命令字节，一个 ECC 字节），用于关闭视频模式显示模块中的显示以节省电量。 请注意，接口应保持通电以接收开启或唤醒命令。</p>
+<h4 id="5-Turn-On-Peripheral-Command-Data-Type-11-0010-32h"><a href="#5-Turn-On-Peripheral-Command-Data-Type-11-0010-32h" class="headerlink" title="5) Turn On Peripheral Command, Data Type = 11 0010 (32h)"></a>5) Turn On Peripheral Command, Data Type = 11 0010 (32h)</h4><p>打开外设命令是一个单字节数据包（带有 ECC 的两个字节），用于打开视频模式显示模块中的显示器以进行正常显示操作。 </p>
+<h4 id="6-Generic-Short-WRITE-Packet-0-to-7-Parameters-Data-Type-xx-x011-x3h-and-xBh"><a href="#6-Generic-Short-WRITE-Packet-0-to-7-Parameters-Data-Type-xx-x011-x3h-and-xBh" class="headerlink" title="6) Generic Short WRITE Packet, 0 to 7 Parameters, Data Type = xx x011 (x3h and xBh)"></a>6) Generic Short WRITE Packet, 0 to 7 Parameters, Data Type = xx x011 (x3h and xBh)</h4><p>通用短写命令是一种短包类型，用于将通用数据发送到外设。 该数据包内容的格式和解释超出了本规范的范围。 系统设计人员有责任确保主机处理器和外设就此类数据的格式和解释达成一致。</p>
+<p>完整的数据包可能长达九个字节，包括一个 ECC 字节。 超出标头 (DI) 字节的字节数由 3 位字段 DT[5:3] 明确指定 </p>
+<h4 id="7-Generic-READ-Request-0-to-7-Parameters-Data-Type-xx-x100-x4h-and-xCh"><a href="#7-Generic-READ-Request-0-to-7-Parameters-Data-Type-xx-x100-x4h-and-xCh" class="headerlink" title="7) Generic READ Request, 0 to 7 Parameters, Data Type = xx x100 (x4h and xCh)"></a>7) Generic READ Request, 0 to 7 Parameters, Data Type = xx x100 (x4h and xCh)</h4><p>通用读请求是一个短包，从外设请求数据。 这个包的参数和返回数据的格式和解释超出了本规范的范围。 系统设计人员有责任确保主机处理器和外设就此类数据的格式和解释达成一致。</p>
+<h4 id="11-Video-Mode-Interface-Timing"><a href="#11-Video-Mode-Interface-Timing" class="headerlink" title="11) Video Mode Interface Timing"></a>11) Video Mode Interface Timing</h4><p>视频模式外设需要实时传输像素数据。 本节规定了此类显示模块的 DSI 流量的格式和时序</p>
+<p>处理器应支持本节中的所有流量序列。 视频模式外围设备应至少支持本节中的流量序列之一。 外围设备不应要求任何有关流量序列或数据包定时的附加约束。 外设供应商应记录表 19 中列出的所有相关时序参数。</p>
+<p>在下图中，BLLP 被定义为视频数据包（例如像素流和同步事件数据包）不会主动传输到外围设备的时间段。</p>
+<p>要启用 PHY 同步，主机处理器应定期结束 HS 传输并将数据通道驱动到 LP 状态。 这种转换应该每帧至少发生一次； 在本节的图中显示为 LPM。 建议在水平消隐时间内每条扫描线返回 LP 状态一次。 无论 BLLP 周期的频率如何，主机处理器都负责满足所有记录在案的外设时序要求。 请注意，在较低频率下， BLLP 周期将接近或变为零，并且突发模式将与非突发模式无法区分。</p>
+<p>在 BLLP 期间，DSI Link 可以执行以下任何操作：</p>
+<ul>
+<li>保持空闲模式，LP-RX 主机处理器为 LP-11 状态和 LP-RX</li>
+<li>使用转义模式将一个或多个非视频数据包从主机处理器传输到外设</li>
+<li>使用 HS 模式将从处理器向外围设备发送一个或多个非视频数据包</li>
+<li>如果之前的处理器到外设传输以 BTA 结束，则使用转义模式将一个或多个数据包从外设传输到处理器</li>
+<li>使用不同的虚拟通道 ID 在 HS 模式下将一个或多个数据包从主机处理器传输到不同的外设</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>braon-z
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://example.com/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/" title="番外篇-mipi dsi 协议">https://example.com/2021/04/27/mipi 协议阅读/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/lcm-mipi/" rel="tag"><i class="fa fa-tag"></i> lcm - mipi</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/01/03/linux%E9%A9%B1%E5%8A%A8-%E7%94%B5%E6%BA%90%E7%AE%A1%E7%90%86/" rel="prev" title="linux驱动-电源管理">
+                  <i class="fa fa-chevron-left"></i> linux驱动-电源管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/05/06/linux%E9%A9%B1%E5%8A%A8-input%E5%AD%90%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84/" rel="next" title="linux驱动-input子系统">
+                  linux驱动-input子系统 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">braon-z</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">478k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">7:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script>
+NexT.utils.loadComments('#valine-comments', () => {
+  NexT.utils.getScript('https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js', () => {
+    new Valine(Object.assign({"enable":true,"appId":"VsC1eQwQ4Xltm5eA9iYGp3VU-gzGzoHsz","appKey":"kyfyE4RWl6aIojedbxcuJa3V","serverURLs":null,"placeholder":"Just go go","avatar":"mm","meta":["nick","mail","link"],"pageSize":10,"lang":null,"visitor":false,"comment_count":true,"recordIP":false,"enableQQ":false,"requiredFields":[]}, {
+      el: '#valine-comments',
+      path: "/2021/04/27/mipi%20%E5%8D%8F%E8%AE%AE%E9%98%85%E8%AF%BB/",
+      serverURLs: "https://vsc1eqwq.api.lncldglobal.com"
+    }));
+  }, window.Valine);
+});
+</script>
+
+
+
+
+  <script src="/js/activate-power-mode.min.js"></script>
+  <script>
+    POWERMODE.colorful = true;
+    POWERMODE.shake = false;
+    document.body.addEventListener('input', POWERMODE);
+  </script>
+<div class="moon-menu">
+  <div class="moon-menu-items">
+    
+    <div class="moon-menu-item" onclick="back2bottom()">
+      <i class='fa fa-chevron-down'></i>    </div>
+    
+    <div class="moon-menu-item" onclick="back2top()">
+      <i class='fa fa-chevron-up'></i>    </div>
+    
+  </div>
+  <div class="moon-menu-button">
+    <svg class="moon-menu-bg">
+      <circle class="moon-menu-cricle" cx="50%" cy="50%" r="44%"></circle>
+      <circle class="moon-menu-border" cx="50%" cy="50%" r="48%"></circle>
+    </svg>
+    <div class="moon-menu-content">
+      <div class="moon-menu-icon"><i class='fas fa-ellipsis-v'></i></div>
+      <div class="moon-menu-text"></div>
+    </div>
+  </div>
+</div><script src="/js/injector.js"></script>
+</body>
+</html>
