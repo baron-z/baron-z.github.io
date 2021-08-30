@@ -388,20 +388,6 @@
       </tags>
   </entry>
   <entry>
-    <title>linux驱动-电源管理</title>
-    <url>/2021/01/03/linux%E9%A9%B1%E5%8A%A8-%E7%94%B5%E6%BA%90%E7%AE%A1%E7%90%86/</url>
-    <content><![CDATA[<p>&nbsp;&nbsp;&nbsp;&nbsp;Linux 电源管理也由设备模型的一部分，但设备模型的篇幅已经够长了，而他本身内容也比较多，因此将其独立出来。学习平台 mt8789 内核版本 kernel-4.14</p>
-<a id="more"></a>
-
-
-
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">dev_pm_ops</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> (*prepare)(struct device *dev);</span><br><span class="line">    <span class="keyword">void</span> (*complete)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*suspend)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*resume)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*freeze)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*thaw)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*poweroff)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*restore)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*suspend_late)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*resume_early)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*freeze_late)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*thaw_early)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*poweroff_late)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*restore_early)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*suspend_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*resume_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*freeze_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*thaw_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*poweroff_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*restore_noirq)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*runtime_suspend)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*runtime_resume)(struct device *dev);</span><br><span class="line">    <span class="keyword">int</span> (*runtime_idle)(struct device *dev);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="1、休眠"><a href="#1、休眠" class="headerlink" title="1、休眠"></a>1、休眠</h2><h2 id="2、唤醒"><a href="#2、唤醒" class="headerlink" title="2、唤醒"></a>2、唤醒</h2><h2 id="3、PM-notifier"><a href="#3、PM-notifier" class="headerlink" title="3、PM notifier"></a>3、PM notifier</h2><h2 id="4、wakeup-events"><a href="#4、wakeup-events" class="headerlink" title="4、wakeup events"></a>4、wakeup events</h2><h2 id="5、-wakelocks"><a href="#5、-wakelocks" class="headerlink" title="5、_wakelocks"></a>5、_wakelocks</h2><h2 id="6、-autosleep"><a href="#6、-autosleep" class="headerlink" title="6、_autosleep"></a>6、_autosleep</h2><h2 id="7、"><a href="#7、" class="headerlink" title="7、"></a>7、</h2>]]></content>
-      <tags>
-        <tag>驱动</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>linux设备模型</title>
     <url>/2021/01/03/linux%E9%A9%B1%E5%8A%A8-%E8%AE%BE%E5%A4%87%E9%A9%B1%E5%8A%A8%E6%A8%A1%E5%9E%8B/</url>
     <content><![CDATA[<p>&nbsp;&nbsp;&nbsp;&nbsp;Linux设备模型的核心是使用<font color=red>Bus、Class、Device、Driver</font>四个核心数据结构，将大量的、不同功能的硬件设备（以及驱动该硬件设备的方法），以树状结构的形式，进行归纳、抽象，从而方便Kernel的统一管理。<font color = red><strong>学习平台mt8768，内核版本kernel-4.9</strong> </font></p>
